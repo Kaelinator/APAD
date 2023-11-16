@@ -1,0 +1,16 @@
+name: RandomItemDrops
+version: 1.0
+description: You get a random item when you break a block
+author: Kaelinator
+website: twitch.tv/kaelinator17
+api-version: 1.20
+
+main: com.kaelkirk.SpigotPlugin
+
+# commands:
+#     example:
+#         description: An example command
+#         permission: spigotplugin.example
+#         usage: /<command>
+
+permissions: {}
