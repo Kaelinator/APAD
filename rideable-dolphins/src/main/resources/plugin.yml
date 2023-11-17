@@ -1,0 +1,16 @@
+name: RideableDolphins
+version: 1.0
+description: Tame and ride dolphins!
+author: Kaelinator
+website: twitch.tv/kaelinator17
+api-version: 1.20
+
+main: com.kaelkirk.SpigotPlugin
+
+# commands:
+#     example:
+#         description: An example command
+#         permission: spigotplugin.example
+#         usage: /<command>
+
+permissions: {}
