@@ -49,7 +49,14 @@ public class LightTheWayEvent implements Listener {
     lightTheWay(event.getPlayer());
   }
 
-  public void lightTheWay(Player player) {
+  public void removeAllLights() {
+    for (UUID id : blocksBeforeLight.keySet()) {
+      Block lightBlock = blocksBeforeLight.get(id);
+      lightBlock.setType(blockTypeBeforeLight.get(id));
+    }
+  }
+
+  private void lightTheWay(Player player) {
     EntityEquipment equipment = player.getEquipment();
 
     if (blocksBeforeLight.containsKey(player.getUniqueId())) {

@@ -6,9 +6,12 @@ import com.kaelkirk.event.LightTheWayEvent;
 
 public class SpigotPlugin extends JavaPlugin {
 
+  private LightTheWayEvent light;
+
   @Override
   public void onDisable() {
     // Don't log disabling, Spigot does that for you automatically!
+    light.removeAllLights();
   }
 
   @Override
@@ -18,6 +21,6 @@ public class SpigotPlugin extends JavaPlugin {
     // Commands enabled with following method must have entries in plugin.yml
     // getCommand("example").setExecutor(new ExampleCommand(this));
     System.out.println("Hello world from Dynamic Torches");
-    getServer().getPluginManager().registerEvents(new LightTheWayEvent(), this);
+    getServer().getPluginManager().registerEvents(light = new LightTheWayEvent(), this);
   }
 }
