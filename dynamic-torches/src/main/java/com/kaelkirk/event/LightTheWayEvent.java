@@ -11,10 +11,13 @@ import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Waterlogged;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Vehicle;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.inventory.EntityEquipment;
 
 public class LightTheWayEvent implements Listener {
@@ -28,8 +31,25 @@ public class LightTheWayEvent implements Listener {
   }
 
   @EventHandler
+  public void onLightTheWayEvent(VehicleMoveEvent event) {
+    Vehicle vehicle = event.getVehicle();
+    if (vehicle == null) {
+      return;
+    }
+
+    for (Entity passenger : vehicle.getPassengers()) {
+      if (passenger instanceof Player) {
+        lightTheWay((Player) passenger);
+      }
+    }
+  }
+
+  @EventHandler
   public void onLightTheWayEvent(PlayerMoveEvent event) {
-    Player player = event.getPlayer();
+    lightTheWay(event.getPlayer());
+  }
+
+  public void lightTheWay(Player player) {
     EntityEquipment equipment = player.getEquipment();
 
     if (blocksBeforeLight.containsKey(player.getUniqueId())) {
@@ -64,7 +84,6 @@ public class LightTheWayEvent implements Listener {
       wl.setWaterlogged(true);
       block.setBlockData(wl);
     }
-
   }
 
   private ArrayList<Block> getBlocksAtRadius(Location location, double radius) {
