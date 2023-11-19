@@ -70,7 +70,8 @@ public class SuperBundle implements Listener {
       return;
     }
     
-    if (event.getCurrentItem() != null && event.getCurrentItem().equals(superBundle)) {
+    if ((event.getCurrentItem() != null && event.getCurrentItem().equals(superBundle))
+      || (event.getCursor() != null && event.getCursor().equals(superBundle))) {
       event.setCancelled(true);
       return;
     }
@@ -139,7 +140,6 @@ public class SuperBundle implements Listener {
             int j = 0;
             for (; j < contents.size(); j++) {
               if (contents.get(j) == null) {
-                // player.sendMessage("Setting " + bundleContent.get(i).getType() + " to slot " + j);
                 contents.set(j, bundleContent.get(i));
                 break;
               }
@@ -153,12 +153,28 @@ public class SuperBundle implements Listener {
         }
         populateInventory(bundleInventory, page, contents);
 
+        int slot = player.getInventory().getHeldItemSlot();
+        Inventory inventory = player.getInventory();
+        if (inventory.getItem(slot) == null || !inventory.getItem(slot).equals(superBundle)) {
+          ItemStack[] inventoryContent = inventory.getContents();
+          for (slot = 0; slot < inventoryContent.length; slot++) {
+            if (inventoryContent[slot] != null && inventoryContent[slot].equals(superBundle)) {
+              break;
+            }
+          }
+          if (slot == inventoryContent.length) {
+            player.sendMessage("bundle no longer in inventory. Closing");
+            bundleInventory.close();
+            return;
+          }
+        }
+
         itemsCompound.clearNBT();
         itemsCompound.setString("data", contentsToString(contents));
         superBundle = nbtItem.getItem();
 
-        int slot = player.getInventory().getHeldItemSlot();
-        player.getInventory().setItem(slot, superBundle);
+        player.sendMessage("bundle is at slot " + slot);
+        inventory.setItem(slot, superBundle);
       }
     }, 0);
   }
