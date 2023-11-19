@@ -1,20 +1,15 @@
 package com.kaelkirk.event;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Levelled;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,11 +20,11 @@ import org.bukkit.inventory.EntityEquipment;
 public class LightTheWayEvent implements Listener {
   
   private HashMap<UUID, Block> blocksBeforeLight;
-  private HashMap<UUID, Material> blockStateBeforeLight;
+  private HashMap<UUID, Material> blockTypeBeforeLight;
 
   public LightTheWayEvent() {
     blocksBeforeLight = new HashMap<UUID, Block>();
-    blockStateBeforeLight = new HashMap<UUID, Material>();
+    blockTypeBeforeLight = new HashMap<UUID, Material>();
   }
 
   @EventHandler
@@ -39,7 +34,7 @@ public class LightTheWayEvent implements Listener {
 
     if (blocksBeforeLight.containsKey(player.getUniqueId())) {
       Block previousLightBlock = blocksBeforeLight.get(player.getUniqueId());
-      previousLightBlock.setType(blockStateBeforeLight.get(player.getUniqueId()));
+      previousLightBlock.setType(blockTypeBeforeLight.get(player.getUniqueId()));
     }
     
     if (equipment.getItemInMainHand().getType() != Material.TORCH
@@ -50,7 +45,7 @@ public class LightTheWayEvent implements Listener {
     Block block = player.getEyeLocation().getBlock();
     Material type = block.getType();
 
-    if (type != Material.AIR && type != Material.WATER) {
+    if (!isIlluminatable(block)) {
       block = getNearestIlluminatableBlock(player.getEyeLocation());
       if (block == null) {
         return;
@@ -58,8 +53,9 @@ public class LightTheWayEvent implements Listener {
       type = block.getType();
     }
 
+
     blocksBeforeLight.put(player.getUniqueId(), block);
-    blockStateBeforeLight.put(player.getUniqueId(), block.getType());
+    blockTypeBeforeLight.put(player.getUniqueId(), block.getType());
     block.setType(Material.LIGHT);
 
     if (type == Material.WATER) {
@@ -97,16 +93,29 @@ public class LightTheWayEvent implements Listener {
   private Block getNearestIlluminatableBlock(Location location) {
     for (double radius = 1; radius < 4; radius += 1) {
       ArrayList<Block> blockCandidates = getBlocksAtRadius(location, radius);
-      System.out.println(blockCandidates.size() + " candidates at radius " + radius);
       for (Block block : blockCandidates) {
-        Material type = block.getType();
-        System.out.print(block.getType() + ", ");
-        if (type == Material.AIR || type == Material.WATER) {
+        if (isIlluminatable(block)) {
           return block;
         }
       }
-      System.out.println("No match at radius " + radius);
     }
     return null;
+  }
+
+  private boolean isIlluminatable(Block block) {
+    Material type = block.getType();
+    BlockData blockData = block.getBlockData();
+
+    boolean isWaterSourceBlock = false;
+
+    if(blockData instanceof Levelled){
+      Levelled lv = (Levelled)blockData;
+      isWaterSourceBlock = lv.getLevel() == 0;
+    }
+
+    return type == Material.AIR
+        || (type == Material.WATER && isWaterSourceBlock)
+        || type == Material.CAVE_AIR
+        || type == Material.VOID_AIR;
   }
 }
