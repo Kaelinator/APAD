@@ -99,7 +99,7 @@ public class RideDolphinEvent implements Listener, PacketListener {
     }
     Entity vehicle = event.getPlayer().getVehicle();
 
-    if (vehicle.getType() != EntityType.DOLPHIN) {
+    if (vehicle == null || vehicle.getType() != EntityType.DOLPHIN) {
       return;
     }
 
