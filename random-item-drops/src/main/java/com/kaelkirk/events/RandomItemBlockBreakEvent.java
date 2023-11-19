@@ -34,7 +34,6 @@ public class RandomItemBlockBreakEvent implements Listener {
       return;
     }
 
-    event.setDropItems(false);
     Collection<ItemStack> itemStacks = event.getBlock().getDrops(event.getPlayer().getInventory().getItemInMainHand());
 
     if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
@@ -44,6 +43,12 @@ public class RandomItemBlockBreakEvent implements Listener {
     if (itemStacks.size() == 0) {
       return;
     }
+    
+    if (random.nextInt(4) != 0) {
+      return;
+    }
+
+    event.setDropItems(false);
 
     Material randomMaterial = generateRandomMaterial();
     itemStacks.add(new ItemStack(randomMaterial));
@@ -78,6 +83,9 @@ public class RandomItemBlockBreakEvent implements Listener {
         result == Material.FIRE ||
         result == Material.SOUL_FIRE ||
         result == Material.LIGHT ||
+        result == Material.DEBUG_STICK ||
+        result == Material.BARRIER ||
+        result == Material.ENDER_DRAGON_SPAWN_EGG ||
         result.isAir() ||
         (!result.isBlock() && !result.isItem())
     ) {
