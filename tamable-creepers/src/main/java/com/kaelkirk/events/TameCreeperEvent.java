@@ -78,7 +78,7 @@ public class TameCreeperEvent implements Listener {
     Mob m = (Mob) tamee;
     Bukkit.getMobGoals().removeAllGoals(m, GoalType.TARGET);
     Bukkit.getMobGoals().addGoal(m, 0, new FollowPlayerGoal(plugin, m, tamer));
-    container.set(ownerKey, PersistentDataType.STRING, UUID.randomUUID().toString());
+    container.set(ownerKey, PersistentDataType.STRING, tamer.getUniqueId().toString());
 
     world.spawnParticle(Particle.HEART, tamee.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25);
   }
