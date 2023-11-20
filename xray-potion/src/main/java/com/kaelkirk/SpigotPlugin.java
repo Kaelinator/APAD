@@ -3,8 +3,6 @@ package com.kaelkirk;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.comphenix.protocol.ProtocolLibrary;
-import com.comphenix.protocol.ProtocolManager;
 import com.kaelkirk.brew.BaseXRayBrew;
 import com.kaelkirk.brew.BlockXRayBrew;
 import com.kaelkirk.brew.BrewingRecipe;
@@ -14,8 +12,6 @@ import com.kaelkirk.event.PotionEvent;
 public class SpigotPlugin extends JavaPlugin {
 
   private PlayerDrinkXRayPotion xRayPotionListener;
-  private ProtocolManager protocolManager;
-  // private NamespacedKey ownerKey;
 
   @Override
   public void onDisable() {
@@ -30,10 +26,8 @@ public class SpigotPlugin extends JavaPlugin {
     // Commands enabled with following method must have entries in plugin.yml
     // getCommand("example").setExecutor(new ExampleCommand(this));
     System.out.println("Hello world from X-Ray Potions");
-    // ownerKey = new NamespacedKey(this, "Owner");
     BrewingRecipe.setPlugin(this);
     new BrewingRecipe(Material.GLASS, new BaseXRayBrew());
-    protocolManager = ProtocolLibrary.getProtocolManager();
 
     for (Material type : Material.values()) {
       if (type.isBlock() && type.isSolid() && !type.isAir()) {
@@ -44,6 +38,5 @@ public class SpigotPlugin extends JavaPlugin {
 
     getServer().getPluginManager().registerEvents(new PotionEvent(), this);
     getServer().getPluginManager().registerEvents(xRayPotionListener = new PlayerDrinkXRayPotion(this), this);
-    protocolManager.addPacketListener(xRayPotionListener);
   }
 }

@@ -23,22 +23,17 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.events.ListenerPriority;
-import com.comphenix.protocol.events.ListeningWhitelist;
+import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.events.PacketListener;
-import com.comphenix.protocol.reflect.StructureModifier;
-import com.comphenix.protocol.reflect.accessors.FieldAccessor;
 import com.kaelkirk.brew.BaseXRayBrew;
 import com.kaelkirk.brew.BlockXRayBrew;
 
 import de.tr7zw.nbtapi.NBTEntity;
 import de.tr7zw.nbtapi.NBTItem;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
-public class PlayerDrinkXRayPotion implements Listener, Runnable, PacketListener {
+public class PlayerDrinkXRayPotion implements Listener, Runnable {
 
-  private Plugin plugin;
   private HashMap<UUID, Integer> timeLeft;
   private HashMap<UUID, Material> material;
   private HashMap<UUID, List<Entity>> shulkers;
@@ -47,7 +42,6 @@ public class PlayerDrinkXRayPotion implements Listener, Runnable, PacketListener
   private final int duration = 120 * 20;
 
   public PlayerDrinkXRayPotion(Plugin plugin) {
-    this.plugin = plugin;
     timeLeft = new HashMap<UUID, Integer>();
     material = new HashMap<UUID, Material>();
     shulkers = new HashMap<UUID, List<Entity>>();
@@ -88,6 +82,11 @@ public class PlayerDrinkXRayPotion implements Listener, Runnable, PacketListener
 
   public void stopXRayEffect() {
     Bukkit.getScheduler().cancelTask(xRayEffectTask);
+    for (List<Entity> shulks : shulkers.values()) {
+      for (Entity shulker : shulks) {
+        shulker.remove();
+      }
+    }
   }
 
   @Override
@@ -116,20 +115,27 @@ public class PlayerDrinkXRayPotion implements Listener, Runnable, PacketListener
       Location location = Bukkit.getPlayer(playerId).getEyeLocation();
 
       ArrayList<Block> allBlocksWithinRadius = getBlocksAtRadius(location, 50);
-      // ArrayList<Block> blocksToSee = new ArrayList<Block>();
+      Player player = Bukkit.getPlayer(playerId);
+      World world = player.getWorld();
 
       theseShulkers = new ArrayList<Entity>();
       for (Block block : allBlocksWithinRadius) {
         if (block.getType() == toSee) {
-          // blocksToSee.add(block);
           Entity shulker = block.getWorld().spawnEntity(block.getLocation(), EntityType.SHULKER);
           NBTEntity shulkerNbt = new NBTEntity(shulker);
-          shulkerNbt.setString("ExclusiveToPlayer", playerId.toString());
           shulkerNbt.setBoolean("NoAI", true);
           shulkerNbt.setBoolean("Invulnerable", true);
+          shulkerNbt.setBoolean("Silent", true);
           glow.apply((LivingEntity) shulker);
           invisible.apply((LivingEntity) shulker);
           theseShulkers.add(shulker);
+          PacketContainer destroyPacket = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
+          destroyPacket.getModifier().write(0, new IntArrayList(new int[] { shulker.getEntityId() }));
+          for (Player notThePlayer : world.getPlayers()) {
+            if (notThePlayer.getUniqueId() != playerId) {
+              ProtocolLibrary.getProtocolManager().sendServerPacket(notThePlayer, destroyPacket);
+            }
+          }
         }
       }
       shulkers.put(playerId, theseShulkers);
@@ -137,7 +143,6 @@ public class PlayerDrinkXRayPotion implements Listener, Runnable, PacketListener
   }
     private ArrayList<Block> getBlocksAtRadius(Location location, double radius) {
     World world = location.getWorld();
-    // location = location.toCenterLocation();
     ArrayList<Block> blocksAtRadius = new ArrayList<Block>();
     double startingX = location.getX();
     double startingY = location.getY();
@@ -146,50 +151,12 @@ public class PlayerDrinkXRayPotion implements Listener, Runnable, PacketListener
       for (double y = startingY - radius; y <= startingY + radius; y++) {
         for (double z = startingZ - radius; z <= startingZ + radius; z++) {
           Location locationAtRadius = new Location(world, x, y, z);
-          // double distance = locationAtRadius.distance(location);
           Block b = world.getBlockAt(locationAtRadius);
-          // if (distance <= radius) {
           blocksAtRadius.add(b);
-          // }
         }
       }
     }
     return blocksAtRadius;
   }
-
-    @Override
-    public Plugin getPlugin() {
-      return this.plugin;
-    }
-
-    @Override
-    public ListeningWhitelist getReceivingWhitelist() {
-      return ListeningWhitelist.EMPTY_WHITELIST;
-    }
-
-    @Override
-    public ListeningWhitelist getSendingWhitelist() {
-      return ListeningWhitelist.newBuilder()
-        .priority(ListenerPriority.NORMAL)
-        .types(PacketType.Play.Server.SPAWN_ENTITY)
-        .build();
-    }
-
-    @Override
-    public void onPacketReceiving(PacketEvent arg0) { }
-
-    @Override
-    public void onPacketSending(PacketEvent event) {
-      Player player = event.getPlayer();
-      player.sendMessage("Spawn entity");
-      
-      if (event.getPacketType() != PacketType.Play.Server.SPAWN_ENTITY) {
-        return;
-      }
-
-      PacketContainer packet = event.getPacket();
-      int id = packet.getIntegers().read(0);
-
-    }
 
 }

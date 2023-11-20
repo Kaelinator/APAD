@@ -57,7 +57,7 @@ public class BlockXRayBrew extends BrewAction {
       Component.text("X-Ray Vision (02:00)").decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.GREEN.asRGB())),
       Component.text(""),
       Component.text("When applied:").decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.PURPLE.asRGB())),
-      Component.text("See " + ingredient.getType()).decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.GRAY.asRGB())),
+      Component.text("See " + ingredient.getType()).decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.GREEN.asRGB())),
     });
     potionMeta.addItemFlags(ItemFlag.HIDE_ITEM_SPECIFICS);
     potionMeta.lore(lore);
@@ -68,9 +68,6 @@ public class BlockXRayBrew extends BrewAction {
         NBTItem newPotionNbt = new NBTItem(brewedItem);
         newPotionNbt.setString(KEY, ingredient.getType().toString());
         inventory.setItem(i, newPotionNbt.getItem());
-        for (HumanEntity h : inventory.getViewers()) {
-          h.sendMessage("has nbt: " + newPotionNbt.getString(KEY));
-        }
       }
     }
 

@@ -105,7 +105,7 @@ public class BrewingRecipe {
   }
 
   public void startBrewing(BrewerInventory inventory) {
-    clock = new BrewClock(this, inventory, 4);
+    clock = new BrewClock(this, inventory, 400);
   }
 
   public int getFuelSet() {
