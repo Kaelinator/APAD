@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Color;
-import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.BrewerInventory;
 import org.bukkit.inventory.ItemFlag;
@@ -18,14 +17,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
-public class BaseXRayBrew extends BrewAction {
+public class BlockXRayBrew extends BrewAction {
 
-  public static final String ID = "x_ray";
-  public static final String KEY = "CustomPotion";
+  public static final String KEY = "X_RAY";
 
   @Override
   public void brew(BrewerInventory inventory, ItemStack brewedItem, ItemStack ingredient) {
-
     ItemMeta meta = brewedItem.getItemMeta();
     if (!(meta instanceof PotionMeta)) {
       return;
@@ -38,12 +35,16 @@ public class BaseXRayBrew extends BrewAction {
       return;
     }
 
-    if (ingredient.getType() != Material.GLASS) {
+    if (!brewedItemNbt.hasTag(BaseXRayBrew.KEY) && !brewedItemNbt.getString(BaseXRayBrew.KEY).equals(BaseXRayBrew.ID)) {
       return;
     }
 
     if (brewedItemNbt.hasTag(KEY)) {
       return;
+    }
+    
+    for (HumanEntity h : inventory.getViewers()) {
+      h.sendMessage("you brewed an xray potion");
     }
 
 
@@ -56,23 +57,24 @@ public class BaseXRayBrew extends BrewAction {
       Component.text("X-Ray Vision (02:00)").decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.GREEN.asRGB())),
       Component.text(""),
       Component.text("When applied:").decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.PURPLE.asRGB())),
-      Component.text("No effect").decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.GRAY.asRGB())),
+      Component.text("See " + ingredient.getType()).decoration(TextDecoration.ITALIC, false).color(TextColor.color(Color.GRAY.asRGB())),
     });
     potionMeta.addItemFlags(ItemFlag.HIDE_ITEM_SPECIFICS);
     potionMeta.lore(lore);
-
     ItemStack[] contents = inventory.getContents();
     for (int i = 0; i < contents.length; i++) {
       if (contents[i] != null && contents[i].equals(brewedItem)) {
         brewedItem.setItemMeta(potionMeta);
         NBTItem newPotionNbt = new NBTItem(brewedItem);
-        newPotionNbt.setString(KEY, ID);
+        newPotionNbt.setString(KEY, ingredient.getType().toString());
         inventory.setItem(i, newPotionNbt.getItem());
         for (HumanEntity h : inventory.getViewers()) {
           h.sendMessage("has nbt: " + newPotionNbt.getString(KEY));
         }
       }
     }
+
+
   }
   
 }
