@@ -9,3 +9,4 @@
 | [Dynamic torches](dynamic-torches) | [![dynamic torches](http://img.youtube.com/vi/2-uJBHjSdc8/0.jpg)](https://youtu.be/2-uJBHjSdc8) |
 | [Rideable dolphins](rideable-dolphins) | [![rideable dolphins](http://img.youtube.com/vi/wg0q-tVEfTk/0.jpg)](https://youtu.be/wg0q-tVEfTk) |
 | [X-Ray potion](xray-potion) | [![x-ray potion](http://img.youtube.com/vi/pT1qjkRishk/0.jpg)](https://youtu.be/pT1qjkRishk) |
+| [Edible ender pearls](warps) | [![edible ender pearls](http://img.youtube.com/vi/MSLA2fF2rB4/0.jpg)](https://youtu.be/MSLA2fF2rB4) |
