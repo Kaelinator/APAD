@@ -3,8 +3,6 @@ package com.kaelkirk.events;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerToggleSneakEvent;
-import org.bukkit.plugin.Plugin;
 
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
 import com.kaelkirk.trackers.PlayerBackflipTracker;

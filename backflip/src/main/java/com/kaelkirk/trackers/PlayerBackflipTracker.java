@@ -1,10 +1,17 @@
 package com.kaelkirk.trackers;
 
+import java.lang.reflect.Field;
+import java.util.List;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.craftbukkit.v1_20_R2.CraftServer;
+import org.bukkit.craftbukkit.v1_20_R2.CraftWorld;
 import org.bukkit.craftbukkit.v1_20_R2.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -15,6 +22,19 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
+
+import com.mojang.authlib.GameProfile;
+
+import net.minecraft.network.protocol.game.ClientboundMoveEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 
 public class PlayerBackflipTracker implements Runnable, Listener {
 
@@ -27,6 +47,8 @@ public class PlayerBackflipTracker implements Runnable, Listener {
   private boolean currentlyBackflipping;
   private Location location;
   private Vector initialVelocity;
+  private ServerPlayer serverPlayer;
+  private float pitch;
 
   public PlayerBackflipTracker(Player player) {
     this.player = player;
@@ -67,13 +89,34 @@ public class PlayerBackflipTracker implements Runnable, Listener {
       close();
       armorStand.remove();
       player.setVelocity(initialVelocity);
+      for (Player p : player.getWorld().getPlayers()) {
+        ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
+        connection.send(new ClientboundRemoveEntitiesPacket(serverPlayer.getId()));
+      }
       return;
     }
 
-    l.add(initialVelocity);
+    l = l.add(initialVelocity);
     l.setPitch(l.getPitch() - 30f);
-    ((CraftEntity) armorStand).getHandle().b(l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch());
+    ((CraftEntity) armorStand).getHandle().moveTo(l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch());
     player.setSpectatorTarget(armorStand);
+    Player fakePlayer = (Player) serverPlayer.getBukkitEntity();
+    fakePlayer.setGliding(true);
+    // serverPlayer.moveTo(l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch());
+    
+    // serverPlayer.
+    List<SynchedEntityData.DataValue<?>> data = serverPlayer.getEntityData().packDirty();
+    for (Player p : player.getWorld().getPlayers()) {
+      ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
+      if (((int) pitch / 10 + 1) % 3 == 0) {
+        connection.send(new ClientboundMoveEntityPacket.PosRot(
+          serverPlayer.getId(), (short) 0, (short) 0, (short) 0, (byte) 0, (byte) ((int) 120), true));
+      }
+      if (data == null) {
+        continue;
+      }
+      connection.send(new ClientboundSetEntityDataPacket(serverPlayer.getId(), data));
+    }
   }
 
   @EventHandler
@@ -110,7 +153,35 @@ public class PlayerBackflipTracker implements Runnable, Listener {
     armorStand.setAI(false);
     // player.sendMessage(angle.getX() + " " + angle.getY() + " " + angle.getZ());
     player.setGameMode(GameMode.SPECTATOR);
+    spawnPlayer(world);
 
+  }
+
+  private void spawnPlayer(World world) {
+    MinecraftServer minecraftServer = ((CraftServer) Bukkit.getServer()).getServer();
+    ServerLevel serverLevel = ((CraftWorld) location.getWorld()).getHandle();
+    UUID uuid = UUID.randomUUID();
+    GameProfile gameProfile = new GameProfile(uuid, player.getName());
+    serverPlayer = new ServerPlayer(minecraftServer, serverLevel, gameProfile, ClientInformation.createDefault());
+    setValueUsingReflection(serverPlayer, "c", ((CraftPlayer) player).getHandle().connection);
+    serverPlayer.moveTo(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+    pitch = location.getPitch();
+    for (Player p : world.getPlayers()) {
+      ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
+      connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, serverPlayer));
+      connection.send(serverPlayer.getAddEntityPacket());
+    }
+
+  }
+
+  public void setValueUsingReflection(Object obj, String fieldName, Object value) {
+    try {
+      Field field = obj.getClass().getDeclaredField(fieldName);
+      field.setAccessible(true);
+      field.set(obj, value);
+    } catch (Exception exception) {
+      exception.printStackTrace();
+    }
   }
 
   
