@@ -12,7 +12,6 @@ public class PlayerBackflipEvent implements Listener {
   @EventHandler
   public void onPlayerBackflip(PlayerJumpEvent event) {
     Player player = event.getPlayer();
-    player.sendMessage("you jumped!");
     new PlayerBackflipTracker(player);
   }
 
