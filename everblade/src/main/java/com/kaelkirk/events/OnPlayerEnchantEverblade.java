@@ -7,7 +7,6 @@ import java.util.Random;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.EnchantItemEvent;
@@ -32,7 +31,6 @@ public class OnPlayerEnchantEverblade implements Listener {
   
   @EventHandler
   public void onPlayerEnchant(EnchantItemEvent event) {
-    Player player = event.getEnchanter();
     ItemStack item = event.getItem();
 
     if (event.isCancelled()) {
@@ -40,6 +38,18 @@ public class OnPlayerEnchantEverblade implements Listener {
     }
 
     if (item.getType() != Material.GOLDEN_SWORD) {
+      return;
+    }
+
+    int cost = event.getExpLevelCost();
+    if (cost < 27) {
+      System.out.println("cost too low to be an Everblade");
+      return;
+    }
+
+    int chance = - cost + 40;
+
+    if (random.nextInt(chance) != 0) {
       return;
     }
 
@@ -53,15 +63,5 @@ public class OnPlayerEnchantEverblade implements Listener {
     meta.lore(lore);
 
     item.setItemMeta(meta);
-
-
-    // container.
-
-    // int cost = event.getExpLevelCost();
-    // if (cost < 27) {
-    //   return;
-    // }
-
-    player.sendMessage("you enchanted a golden sword");
   }
 }

@@ -5,6 +5,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.kaelkirk.events.OnPlayerEnchantEverblade;
 import com.kaelkirk.events.OnPlayerEverbladeKill;
+import com.kaelkirk.events.OnPlayerGrindEverblade;
+import com.kaelkirk.events.OnPlayerRepairEverblade;
 
 public class SpigotPlugin extends JavaPlugin {
 
@@ -25,5 +27,7 @@ public class SpigotPlugin extends JavaPlugin {
     System.out.println("Hello world from Everblade");
     getServer().getPluginManager().registerEvents(new OnPlayerEnchantEverblade(key), this);
     getServer().getPluginManager().registerEvents(new OnPlayerEverbladeKill(key), this);
+    getServer().getPluginManager().registerEvents(new OnPlayerRepairEverblade(key), this);
+    getServer().getPluginManager().registerEvents(new OnPlayerGrindEverblade(key), this);
   }
 }

@@ -3,6 +3,7 @@ package com.kaelkirk.events;
 import java.util.HashMap;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,11 +17,13 @@ import com.kaelkirk.gui.SuperBundle;
 public class OnPlayerOpenSuperBundle implements Listener {
 
   private Plugin plugin;
+  private NamespacedKey key;
   private HashMap<ItemStack, SuperBundle> bundleMapping;
 
-  public OnPlayerOpenSuperBundle(Plugin plugin) {
+  public OnPlayerOpenSuperBundle(Plugin plugin, NamespacedKey key) {
     this.plugin = plugin;
     bundleMapping = new HashMap<ItemStack, SuperBundle>();
+    this.key = key;
   }
 
   @EventHandler
@@ -39,7 +42,7 @@ public class OnPlayerOpenSuperBundle implements Listener {
     if (bundleMapping.containsKey(event.getItem())) {
       superBundle = bundleMapping.get(event.getItem());
     } else {
-      superBundle = new SuperBundle(event.getItem(), this.plugin);
+      superBundle = new SuperBundle(event.getItem(), this.plugin, key);
     }
 
 

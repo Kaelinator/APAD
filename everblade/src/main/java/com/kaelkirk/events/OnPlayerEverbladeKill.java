@@ -1,6 +1,5 @@
 package com.kaelkirk.events;
 
-import java.util.Collection;
 import java.util.UUID;
 
 import org.bukkit.NamespacedKey;
@@ -18,8 +17,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-
-import com.google.common.collect.Multimap;
 
 public class OnPlayerEverbladeKill implements Listener {
   
@@ -62,7 +59,7 @@ public class OnPlayerEverbladeKill implements Listener {
     }
 
     int numberOfKills = container.get(key, PersistentDataType.INTEGER);
-    numberOfKills += 100;
+    numberOfKills++;
     container.set(key, PersistentDataType.INTEGER, numberOfKills);
 
     meta.removeAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE);
@@ -74,9 +71,6 @@ public class OnPlayerEverbladeKill implements Listener {
     meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, speedModifier);
     
     damagingItem.setItemMeta(meta);
-    
-    
-    damager.sendMessage("Everblade kill number: " + numberOfKills);
   }
 
 

@@ -1,10 +1,14 @@
 package com.kaelkirk;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.kaelkirk.events.OnPlayerOpenSuperBundle;
 
 public class SpigotPlugin extends JavaPlugin {
+
+
+  private NamespacedKey key;
 
   @Override
   public void onDisable() {
@@ -18,6 +22,7 @@ public class SpigotPlugin extends JavaPlugin {
     // Commands enabled with following method must have entries in plugin.yml
     // getCommand("example").setExecutor(new ExampleCommand(this));
     System.out.println("Hello world from Super Bundles");
-    getServer().getPluginManager().registerEvents(new OnPlayerOpenSuperBundle(this), this);
+    key = new NamespacedKey(this, "SUPER_BUNDLE");
+    getServer().getPluginManager().registerEvents(new OnPlayerOpenSuperBundle(this, key), this);
   }
 }
