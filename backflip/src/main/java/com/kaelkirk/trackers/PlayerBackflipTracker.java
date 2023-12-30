@@ -74,9 +74,28 @@ public class PlayerBackflipTracker implements Runnable, Listener {
     PlayerBackflipTracker.plugin = plugin;
   }
 
-  public void close() {
+  public void stop() {
     Bukkit.getScheduler().cancelTask(taskId);
     PlayerToggleSneakEvent.getHandlerList().unregister(this);
+
+    if (!currentlyBackflipping) {
+      return;
+    }
+
+    player.setGameMode(player.getPreviousGameMode());
+    player.teleport(location);
+    player.setVelocity(initialVelocity);
+
+    if (armorStand != null) {
+      armorStand.remove();
+    }
+
+    if (serverPlayer != null) {
+      for (Player p : player.getWorld().getPlayers()) {
+        ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
+        connection.send(new ClientboundRemoveEntitiesPacket(serverPlayer.getId()));
+      }
+    }
   }
 
   @Override
@@ -87,7 +106,7 @@ public class PlayerBackflipTracker implements Runnable, Listener {
     Entity playerEntity = (Entity) player;
 
     if (playerEntity.isOnGround()) {
-      close();
+      stop();
     }
 
     if (!currentlyBackflipping) {
@@ -97,15 +116,7 @@ public class PlayerBackflipTracker implements Runnable, Listener {
     Location l = armorStand.getLocation();
 
     if (Math.abs(l.getPitch() - 360) < 20) {
-      player.setGameMode(player.getPreviousGameMode());
-      player.teleport(location);
-      close();
-      armorStand.remove();
-      player.setVelocity(initialVelocity);
-      for (Player p : player.getWorld().getPlayers()) {
-        ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
-        connection.send(new ClientboundRemoveEntitiesPacket(serverPlayer.getId()));
-      }
+      stop();
       return;
     }
 

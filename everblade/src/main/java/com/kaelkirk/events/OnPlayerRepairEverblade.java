@@ -10,6 +10,7 @@ import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.Repairable;
 import org.bukkit.persistence.PersistentDataContainer;
 
 public class OnPlayerRepairEverblade implements Listener {
@@ -59,6 +60,17 @@ public class OnPlayerRepairEverblade implements Listener {
         return;
       }
     }
+
+    /* reset damage value */
+    ItemStack result = event.getResult();
+    if (!isEverblade(result)) {
+      return;
+    }
+
+    Repairable repairableMeta = (Repairable) result.getItemMeta();
+    /* infinitely repairable */
+    repairableMeta.setRepairCost(Math.min(5, repairableMeta.getRepairCost()));
+    result.setItemMeta(repairableMeta);
   }
 
   private boolean isEverblade(ItemStack item) {
