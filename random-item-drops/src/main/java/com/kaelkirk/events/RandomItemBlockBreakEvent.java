@@ -29,6 +29,10 @@ public class RandomItemBlockBreakEvent implements Listener {
   @EventHandler
   public void onBlockBreakEvent(BlockBreakEvent event) {
 
+    if (event.isCancelled()) {
+      return;
+    }
+
     boolean isNotPlayerPlaced = event.getBlock().getMetadata("isPlayerPlaced").isEmpty();
     if (!isNotPlayerPlaced) {
       return;

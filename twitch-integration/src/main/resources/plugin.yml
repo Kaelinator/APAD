@@ -1,0 +1,16 @@
+name: TwitchIntegration
+version: 1.0
+description: "Fun with Twitch!"
+author: Kaelinator
+website: twitch.tv/kaelinator17
+api-version: 1.20
+
+main: com.kaelkirk.TwitchIntegrationPlugin
+
+# commands:
+#     example:
+#         description: An example command
+#         permission: spigotplugin.example
+#         usage: /<command>
+
+permissions: {}

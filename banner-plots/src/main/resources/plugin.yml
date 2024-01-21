@@ -1,0 +1,17 @@
+name: BannerPlots
+version: 1.0
+description: Protect your base!
+author: Kaelinator
+website: twitch.tv/kaelinator17
+api-version: 1.20
+depend: [WorldGuard]
+
+main: com.kaelkirk.BannerPlotPlugin
+
+commands:
+  listbannerplots:
+    description: Lists all banner plots and associated information
+    permission: spigotplugin.example
+    usage: /listbannerplots [page number]
+
+permissions: {}
