@@ -2,27 +2,23 @@ package com.kaelkirk;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.WebSocket;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.kaelkirk.lib.HeartbeatHandler;
 import com.kaelkirk.lib.OAuthClient;
+import com.kaelkirk.lib.TokenManager;
 import com.kaelkirk.lib.TwitchChatClient;
 import com.sun.net.httpserver.HttpServer;
 
 public class TwitchIntegrationPlugin extends JavaPlugin {
 
-  private WebSocket socket;
   private HttpServer endpoint;
+  private TwitchChatClient chatClient; 
 
   @Override
   public void onDisable() {
-    if (socket != null) {
-      socket.sendClose(0, "Plugin disabled");
-    }
+    chatClient.close(0, "Plugin disabled");
     if (endpoint != null) {
       endpoint.stop(0);
     }
@@ -30,35 +26,47 @@ public class TwitchIntegrationPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    // Don't log enabling, Spigot does that for you automatically!
+    String clientId = System.getenv("TWITCH_CLIENT_ID");
+    String clientSecret = System.getenv("TWITCH_CLIENT_SECRET");
+
+    this.saveDefaultConfig();
+    String twitchChannelNameToJoin = this.getConfig().getString("twitchChannelNameToJoin");
+    String twitchBotName = this.getConfig().getString("twitchBotName");
+
+    TokenManager manager = new TokenManager();
+    chatClient = new TwitchChatClient(twitchChannelNameToJoin);
+
+    if (manager.hasAccessToken()) {
+      try {
+        manager.refreshTokens(clientId, clientSecret);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    if (manager.hasAccessToken()) {
+      // no need to go through oauth process, access token already exists and has been refreshed
+      chatClient.connect(manager.getAccessToken(), twitchBotName);
+    } else {
+      // need to go through oauth flow
+      try {
+
+        endpoint = HttpServer.create(new InetSocketAddress(8080), 0);
+        endpoint.createContext("/oauth_redirect", new OAuthClient(clientId, clientSecret, chatClient, manager));
+        endpoint.createContext("/", new HeartbeatHandler());
+        // ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor)Executors.newFixedThreadPool(1);
+        endpoint.setExecutor(null);
+        endpoint.start();
+
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
 
     // Commands enabled with following method must have entries in plugin.yml
     // getCommand("example").setExecutor(new ExampleCommand(this));
-    try {
-      endpoint = HttpServer.create(new InetSocketAddress(8080), 0);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
-    endpoint.createContext("/oauth_redirect", new OAuthClient(this));
-    endpoint.createContext("/", new HeartbeatHandler());
-    // ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor)Executors.newFixedThreadPool(1);
-    endpoint.setExecutor(null);
-    endpoint.start();
 
     System.out.println("Hello world from Twitch");
   }
 
-  public void connectChatBot(String name, String accessToken) {
-
-    socket = HttpClient
-      .newHttpClient()
-      .newWebSocketBuilder()
-      .buildAsync(URI.create("wss://irc-ws.chat.twitch.tv:443"), new TwitchChatClient("kaelinator17", socket))
-      .join();
-
-    socket.sendText("PASS oauth:" + accessToken, true);
-    socket.sendText("NICK " + name, true);
-    socket.sendText("JOIN #kaelinator17", true);
-  }
 }

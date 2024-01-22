@@ -1,43 +1,29 @@
 package com.kaelkirk.lib;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import org.bukkit.plugin.Plugin;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.kaelkirk.TwitchIntegrationPlugin;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 public class OAuthClient implements HttpHandler {
 
-  private TwitchIntegrationPlugin plugin;
+  private TwitchChatClient chatClient;
+  private TokenManager tokenManager;
   private String clientSecret;
   private String clientId;
   private String state;
 
-  public OAuthClient(TwitchIntegrationPlugin plugin) {
-    this.plugin = plugin;
+  public OAuthClient(String clientId, String clientSecret, TwitchChatClient chatClient, TokenManager tokenManager) {
+    this.chatClient = chatClient;
+    this.tokenManager = tokenManager;
 
-    clientId = System.getenv("TWITCH_CLIENT_ID");
-    clientSecret = System.getenv("TWITCH_CLIENT_SECRET");
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
     state = UUID.randomUUID().toString();
 
     String accessMessage = "Allow access at: "
@@ -45,7 +31,8 @@ public class OAuthClient implements HttpHandler {
       + "?client_id=" + clientId
       + "&redirect_uri=https%3A%2F%2Fapi.kael.dev%2Foauth_redirect"
       + "&scope=chat%3Aread"
-      + "&response_type=code";
+      + "&response_type=code"
+      + "&state=" + state;
 
     System.out.println(accessMessage);
   }
@@ -53,15 +40,22 @@ public class OAuthClient implements HttpHandler {
   @Override
   public void handle(HttpExchange req) throws IOException {
     String queryParams = req.getRequestURI().getRawQuery();
-    // System.out.println("New query: " + queryParams);
     HashMap<String, String> params = parseQueryParams(queryParams);
 
     String response;
     int status;
-    if (!params.containsKey("code")) {
+    if (!params.containsKey("code") || !params.containsKey("state") || !params.get("state").equals(state)) {
 
-      response = "code query parameter not found";
+      response = !params.containsKey("code")
+                ? "Query parameter 'code' not found"
+                : !params.containsKey("state")
+                ? "Query parameter 'state' not found"
+                : !params.get("state").equals(state)
+                ? "Query parameter 'state' does not match"
+                : "Unknown error has occurred";
+
       status = 400;
+
       req.sendResponseHeaders(status, response.getBytes().length);
       OutputStream output = req.getResponseBody();
       output.write(response.getBytes());
@@ -72,20 +66,10 @@ public class OAuthClient implements HttpHandler {
     response = "Success :)";
     status = 200;
 
-    Map<String, String> body = new HashMap<String, String>();
+    tokenManager.fetchTokens(clientId, clientSecret, params.get("code"));
+    chatClient.connect(tokenManager.getAccessToken(), "apadinator");
 
-    body.put("client_id", clientId);
-    body.put("client_secret", clientSecret);
-    body.put("code", params.get("code"));
-    body.put("grant_type", "authorization_code");
-    body.put("redirect_uri", "https://api.kael.dev/oauth_redirect");
-
-    String result = sendURLEncodedFormPost("https://id.twitch.tv/oauth2/token", body);
-    JsonObject json = JsonParser.parseString(result).getAsJsonObject();
-    String accessToken = json.get("access_token").getAsString();
-    // String refreshToken = json.get("refresh_token").getAsString();
-
-    plugin.connectChatBot("apadinator", accessToken);
+    state = UUID.randomUUID().toString();
 
     req.sendResponseHeaders(status, response.getBytes().length);
     OutputStream output = req.getResponseBody();
@@ -109,34 +93,5 @@ public class OAuthClient implements HttpHandler {
     return result;
   }
 
-  private String sendURLEncodedFormPost(String url, Map<String, String> body) throws IOException {
-    URLConnection con = new URL(url).openConnection();
-    HttpURLConnection http = (HttpURLConnection) con;
-
-    http.setRequestMethod("POST");
-    http.setDoOutput(true);
-
-    StringJoiner encodedBody = new StringJoiner("&");
-
-    for (Map.Entry<String,String> entry : body.entrySet()) {
-      encodedBody.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "=" + URLEncoder.encode(entry.getValue(), "UTF-8"));
-    }
-
-    byte[] out = encodedBody.toString().getBytes(StandardCharsets.UTF_8);
-    int length = out.length;
-    http.setFixedLengthStreamingMode(length);
-    http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-    http.connect();
-    OutputStream os = http.getOutputStream();
-    os.write(out);
-
-    BufferedReader br = (100 <= http.getResponseCode() && http.getResponseCode() <= 399)
-      ? new BufferedReader(new InputStreamReader(http.getInputStream()))
-      : new BufferedReader(new InputStreamReader(http.getErrorStream()));
-
-    String responseBody = br.lines().collect(Collectors.joining());
-    br.close();
-    return responseBody;
-  }
   
 }

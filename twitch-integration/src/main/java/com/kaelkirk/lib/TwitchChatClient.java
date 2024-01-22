@@ -1,5 +1,7 @@
 package com.kaelkirk.lib;
 
+import java.net.URI;
+import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
@@ -18,12 +20,24 @@ public class TwitchChatClient implements WebSocket.Listener {
   private Pattern pingPattern;
   private Pattern messagePattern;
 
-  public TwitchChatClient(String channelName, WebSocket socket) {
+  public TwitchChatClient(String channelName) {
     this.channelName = channelName;
-    this.socket = socket;
 
     pingPattern = Pattern.compile("^PING :(.*)$", Pattern.MULTILINE);
-    messagePattern = Pattern.compile("^:(\\w+)!.*PRIVMSG #kaelinator17 :(.*)$", Pattern.MULTILINE);
+    messagePattern = Pattern.compile("^:(\\w+)!.*PRIVMSG #" + channelName + " :(.*)$", Pattern.MULTILINE);
+
+  }
+
+  public void connect(String accessToken, String username) {
+    socket = HttpClient
+      .newHttpClient()
+      .newWebSocketBuilder()
+      .buildAsync(URI.create("wss://irc-ws.chat.twitch.tv:443"), this)
+      .join();
+
+    socket.sendText("PASS oauth:" + accessToken, true);
+    socket.sendText("NICK " + username, true);
+    socket.sendText("JOIN #" + channelName, true);
   }
 
   @Override
@@ -45,7 +59,9 @@ public class TwitchChatClient implements WebSocket.Listener {
         return WebSocket.Listener.super.onText(webSocket, data, last);
       }
 
-      socket.sendText("PONG :" + pingMatch.group(1), true);
+      if (socket != null) {
+        socket.sendText("PONG :" + pingMatch.group(1), true);
+      }
 
       return WebSocket.Listener.super.onText(webSocket, data, last);
     }
@@ -66,7 +82,6 @@ public class TwitchChatClient implements WebSocket.Listener {
         .append(Component.text("] " + username + ": ").color(TextColor.color(Color.GRAY.asRGB())))
         .append(Component.text(message).color(TextColor.color(1f, 1f, 0.9f)));
 
-
       Bukkit.broadcast(serverMessage);
 
       return WebSocket.Listener.super.onText(webSocket, data, last);
@@ -86,5 +101,12 @@ public class TwitchChatClient implements WebSocket.Listener {
   public void onError(WebSocket webSocket, Throwable error) {
     System.out.println("Twitch chat client error: " + error);
     WebSocket.Listener.super.onError(webSocket, error);
+  }
+
+  public void close(int code, String message) {
+    if (socket != null) {
+      socket.sendClose(code, message);
+      socket.abort();
+    }
   }
 }

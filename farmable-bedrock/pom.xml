@@ -60,14 +60,13 @@
           </includes>
       </resource>
       <resource>
-          <directory>src/main/resources</directory>
-          <!-- Keep filtering at false for other resources to prevent bad magic -->
-          <filtering>false</filtering>
-          <excludes>
-              <exclude>**/*.java</exclude>
-              <exclude>plugin.yml</exclude>
-              <exclude>config.yml</exclude>
-          </excludes>
+        <directory>src/main/resources</directory>
+        <!-- Keep filtering at false for other resources to prevent bad magic -->
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>plugin.yml</exclude>
+          <exclude>config.yml</exclude>
+        </excludes>
       </resource>
     </resources>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
