@@ -3,20 +3,25 @@ package com.kaelkirk;
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import com.kaelkirk.brew.BaseXRayBrew;
 import com.kaelkirk.brew.BlockXRayBrew;
 import com.kaelkirk.brew.BrewingRecipe;
 import com.kaelkirk.event.PlayerDrinkXRayPotion;
 import com.kaelkirk.event.PotionEvent;
+import com.kaelkirk.event.ShulkerLoadInEvent;
+import com.kaelkirk.manager.XRayManager;
 
-public class SpigotPlugin extends JavaPlugin {
+public class XRayPlugin extends JavaPlugin {
 
-  private PlayerDrinkXRayPotion xRayPotionListener;
+  public static final String X_RAY_SHULKER_OWNER_KEY = "CustomName";
+  private ProtocolManager protocolManager;
 
   @Override
   public void onDisable() {
     // Don't log disabling, Spigot does that for you automatically!
-    xRayPotionListener.stopXRayEffect();
+    XRayManager.stopAllXRayEffects();
   }
 
   @Override
@@ -31,12 +36,13 @@ public class SpigotPlugin extends JavaPlugin {
 
     for (Material type : Material.values()) {
       if (type.isBlock() && type.isSolid() && !type.isAir()) {
-        // System.out.println("registering " + type);
         new BrewingRecipe(type, new BlockXRayBrew());
       }
     }
 
     getServer().getPluginManager().registerEvents(new PotionEvent(), this);
-    getServer().getPluginManager().registerEvents(xRayPotionListener = new PlayerDrinkXRayPotion(this), this);
+    getServer().getPluginManager().registerEvents(new PlayerDrinkXRayPotion(this), this);
+      protocolManager = ProtocolLibrary.getProtocolManager();
+    protocolManager.addPacketListener(new ShulkerLoadInEvent(this));
   }
 }

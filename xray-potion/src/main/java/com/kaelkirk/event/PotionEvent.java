@@ -113,12 +113,9 @@ public class PotionEvent implements Listener {
 
     }
 
-    System.out.println("flag0");
-
     if (((BrewerInventory) inv).getIngredient() == null) {
       return;
     }
-    System.out.println("flag1");
 
     BrewingRecipe recipe = BrewingRecipe.getRecipe((BrewerInventory) inv);
 

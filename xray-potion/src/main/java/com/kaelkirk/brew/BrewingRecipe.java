@@ -88,9 +88,6 @@ public class BrewingRecipe {
           return recipe;
         }
       } else {
-        System.out.println(inventory.getIngredient().getType() + " fuel == null " +
-          recipe.getIngredient().getType() + " " + inventory.getFuel().getType() + " " + recipe.getFuel().getType()
-        );
         if (!recipe.isPerfect() && inventory.getIngredient().getType() == recipe.getIngredient().getType() &&
             inventory.getFuel().getType() == recipe.getFuel().getType()) {
           return recipe;
