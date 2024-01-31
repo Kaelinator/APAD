@@ -3,8 +3,11 @@ package com.kaelkirk.events;
 import java.util.HashMap;
 
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
+
+import net.kyori.adventure.text.Component;
 
 public class TimeManager {
 
@@ -22,15 +25,48 @@ public class TimeManager {
     int sleepingCount = sleepCount.getOrDefault(world, 0) + 1;
     sleepCount.put(world, sleepingCount);
 
-    if (sleepingCount == 1) {
-      scheduler.scheduleSyncDelayedTask(plugin, new TimeMachine(world));
+    if (sleepingCount == world.getPlayerCount()) {
+      return;
     }
+
+    scheduler.scheduleSyncDelayedTask(plugin, new TimeMachine(world));
+
+    alertPlayers(world);
   }
 
   public void removePlayerSleeping(World world) {
     int sleepingCount = sleepCount.getOrDefault(world, 0);
     sleepingCount = sleepingCount > 0 ? sleepingCount - 1 : sleepingCount;
     sleepCount.put(world, sleepingCount);
+
+    if (sleepingCount == 0) {
+      return;
+    }
+
+    alertPlayers(world);
+  }
+
+  public boolean areAllPlayersSleeping(World world) {
+    return sleepCount.get(world) == world.getPlayerCount();
+  }
+
+  private void alertPlayers(World world) {
+    int sleepingCount = sleepCount.get(world);
+    int totalPlayers = world.getPlayerCount();
+    float nightSpeedFactor = ((float) totalPlayers) / (totalPlayers -  sleepingCount);
+    String roundedNightSpeedFactor = String.format("%.2f", nightSpeedFactor);
+    scheduler.scheduleSyncDelayedTask(plugin, new Runnable() {
+      @Override
+      public void run() {
+        for (Player player : world.getPlayers()) {
+          player.sendActionBar(Component.text(sleepingCount + "/" + totalPlayers + " sleeping, night sped up by " + roundedNightSpeedFactor + "x"));
+        }
+      }
+    });
+  }
+
+  private int greatestCommonFactor(int a, int b) {
+    return (b == 0) ? a : greatestCommonFactor(b, a % b);
   }
 
   private class TimeMachine implements Runnable {
@@ -57,13 +93,7 @@ public class TimeManager {
       long newTime = world.getTime() + skipTicks;
       world.setTime(newTime);
 
-      System.out.println("Skipping " + skipTicks + " waiting " + realtimeTicks + " currently: " + world.getTime());
-
       scheduler.scheduleSyncDelayedTask(plugin, this, realtimeTicks);
-    }
-
-    private int greatestCommonFactor(int a, int b) {
-      return (b == 0) ? a : greatestCommonFactor(b, a % b);
     }
 
   }

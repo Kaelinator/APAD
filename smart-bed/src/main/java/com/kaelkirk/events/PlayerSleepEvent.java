@@ -1,14 +1,12 @@
 package com.kaelkirk.events;
 
-import java.util.HashMap;
-
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
-import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
+import org.bukkit.event.player.PlayerBedLeaveEvent;
 
 public class PlayerSleepEvent implements Listener {
 
@@ -35,8 +33,9 @@ public class PlayerSleepEvent implements Listener {
 
 
     manager.addPlayerSleeping(world);
-
-    // player.sendMessage("you're sleeping " + (sleepingCount + 1));
+    if (manager.areAllPlayersSleeping(world)) {
+      return;
+    }
   }
 
   @EventHandler
