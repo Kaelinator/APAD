@@ -3,8 +3,9 @@ package com.kaelkirk.events;
 import java.util.Collection;
 
 import org.bukkit.GameMode;
-import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -14,17 +15,22 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.joml.Random;
 
+import com.kaelkirk.managers.RandomItemPicker;
+
 public class RandomItemBlockBreakEvent implements Listener {
   
   private Random random;
-  private Material[] allMaterials;
+  private RandomItemPicker picker;
   private JavaPlugin plugin;
 
   public RandomItemBlockBreakEvent(JavaPlugin plugin) {
     random = new Random();
-    allMaterials = Material.values();
+    picker = new RandomItemPicker();
     this.plugin = plugin;
   }
+
+  // useless singular items = stack or just more?
+  // lump useless singular items together
 
   @EventHandler
   public void onBlockBreakEvent(BlockBreakEvent event) {
@@ -33,34 +39,43 @@ public class RandomItemBlockBreakEvent implements Listener {
       return;
     }
 
-    boolean isNotPlayerPlaced = event.getBlock().getMetadata("isPlayerPlaced").isEmpty();
+    Block block = event.getBlock();
+
+    boolean isNotPlayerPlaced = block.getMetadata("isPlayerPlaced").isEmpty();
+
     if (!isNotPlayerPlaced) {
       return;
     }
 
-    Collection<ItemStack> itemStacks = event.getBlock().getDrops(event.getPlayer().getInventory().getItemInMainHand());
 
-    if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
-      return;
-    }
+    Player player = event.getPlayer();
 
-    if (itemStacks.size() == 0) {
+    if (player.getGameMode() == GameMode.CREATIVE) {
       return;
     }
     
-    if (random.nextInt(4) != 0) {
+    Collection<ItemStack> drops = block.getDrops(player.getEquipment().getItemInMainHand(), player);
+
+    if (drops.size() == 0) {
       return;
     }
 
-    event.setDropItems(false);
+    float breakSpeed = (float) Math.min(block.getBreakSpeed(player), 1.0);
 
-    Material randomMaterial = generateRandomMaterial();
-    itemStacks.add(new ItemStack(randomMaterial));
-    World world = event.getBlock().getWorld();
+    // f(0) = 1
+    // f(0.05) = 4
+    // f(1) = 20
+    int chance = (int) Math.floor(Math.pow(1000 * breakSpeed, 0.33333d) + breakSpeed * 10);
 
-    for (ItemStack stack : itemStacks) {
-      world.dropItemNaturally(event.getBlock().getLocation(), stack);
+    int randomNumber = random.nextInt(chance); 
+    
+    if (randomNumber != 0) {
+      return;
     }
+
+    ItemStack randomItem = picker.pickRandomItem();
+    World world = block.getWorld();
+    world.dropItemNaturally(block.getLocation(), randomItem );
   }
 
   @EventHandler
@@ -68,34 +83,4 @@ public class RandomItemBlockBreakEvent implements Listener {
     event.getBlock().setMetadata("isPlayerPlaced", new FixedMetadataValue(this.plugin, true));
   }
 
-  public Material generateRandomMaterial() {
-    int randomItemOrdinal = random.nextInt(allMaterials.length); // pick random item using random index
-
-    Material result = allMaterials[randomItemOrdinal];
-
-    if (result == Material.BEDROCK ||
-        result == Material.STRUCTURE_BLOCK ||
-        result == Material.STRUCTURE_VOID ||
-        result == Material.COMMAND_BLOCK_MINECART ||
-        result == Material.REPEATING_COMMAND_BLOCK ||
-        result == Material.CHAIN_COMMAND_BLOCK ||
-        result == Material.COMMAND_BLOCK ||
-        result == Material.END_GATEWAY ||
-        result == Material.END_PORTAL ||
-        result == Material.END_PORTAL_FRAME ||
-        result == Material.JIGSAW ||
-        result == Material.FIRE ||
-        result == Material.SOUL_FIRE ||
-        result == Material.LIGHT ||
-        result == Material.DEBUG_STICK ||
-        result == Material.BARRIER ||
-        result == Material.ENDER_DRAGON_SPAWN_EGG ||
-        result.isAir() ||
-        (!result.isBlock() && !result.isItem())
-    ) {
-      return generateRandomMaterial();
-    }
-
-    return result;
-  }
 }
