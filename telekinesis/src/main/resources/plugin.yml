@@ -4,6 +4,7 @@ description: Modify blocks with your mind!
 author: Kaelinator
 website: twitch.tv/kaelinator17
 api-version: 1.20
+depend: [WorldGuard]
 
 main: com.kaelkirk.SpigotPlugin
 

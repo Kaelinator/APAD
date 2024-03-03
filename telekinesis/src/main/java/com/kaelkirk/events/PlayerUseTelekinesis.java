@@ -16,20 +16,44 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
+import com.kaelkirk.SpigotPlugin;
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldedit.world.World;
+import com.sk89q.worldguard.LocalPlayer;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
+import com.sk89q.worldguard.protection.regions.RegionQuery;
+
 public class PlayerUseTelekinesis implements Listener, Runnable {
 
   private HashMap<UUID, Integer> playerSneakTime;
-  private Plugin plugin;
 
   public PlayerUseTelekinesis(Plugin plugin) {
-    this.plugin = plugin;
     playerSneakTime = new HashMap<UUID, Integer>();
     Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this, 0, 1);
+  }
+
+  @EventHandler
+  public void onPlayerUseTelekinesis(BlockBrokenByTelekinesisEvent event) {
+    LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(event.getPlayer());
+    Block block = event.getBrokenBlock();
+    World world = BukkitAdapter.adapt(event.getWorld());
+    com.sk89q.worldedit.util.Location loc = new com.sk89q.worldedit.util.Location(world, block.getX(), block.getY(), block.getZ());
+    RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+    RegionQuery query = container.createQuery();
+
+    boolean canDoIt = query.testState(loc, localPlayer, SpigotPlugin.TELEKINESIS);
+
+    if (canDoIt) {
+      return;
+    }
+
+    event.setCancelled(true);
   }
   
   @EventHandler
@@ -53,6 +77,16 @@ public class PlayerUseTelekinesis implements Listener, Runnable {
     Block block = rayTrace.getHitBlock();
 
     if (!playerCanBreak(player, rayTrace.getHitBlock())) {
+      return;
+    }
+
+    BlockBrokenByTelekinesisEvent resultingEvent = new BlockBrokenByTelekinesisEvent(
+      player,
+      block
+    );
+    Bukkit.getPluginManager().callEvent(resultingEvent);
+
+    if (resultingEvent.isCancelled()) {
       return;
     }
 
