@@ -17,13 +17,15 @@ import com.kaelkirk.gui.SuperBundle;
 public class OnPlayerOpenSuperBundle implements Listener {
 
   private Plugin plugin;
-  private NamespacedKey key;
+  private NamespacedKey bundleKey;
+  private NamespacedKey buttonKey;
   private HashMap<ItemStack, SuperBundle> bundleMapping;
 
-  public OnPlayerOpenSuperBundle(Plugin plugin, NamespacedKey key) {
+  public OnPlayerOpenSuperBundle(Plugin plugin, NamespacedKey bundleKey, NamespacedKey buttonKey) {
     this.plugin = plugin;
     bundleMapping = new HashMap<ItemStack, SuperBundle>();
-    this.key = key;
+    this.bundleKey = bundleKey;
+    this.buttonKey = buttonKey;
   }
 
   @EventHandler
@@ -42,7 +44,7 @@ public class OnPlayerOpenSuperBundle implements Listener {
     if (bundleMapping.containsKey(event.getItem())) {
       superBundle = bundleMapping.get(event.getItem());
     } else {
-      superBundle = new SuperBundle(event.getItem(), this.plugin, key);
+      superBundle = new SuperBundle(event.getItem(), this.plugin, bundleKey, buttonKey);
     }
 
 

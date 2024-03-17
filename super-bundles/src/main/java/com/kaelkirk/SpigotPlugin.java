@@ -8,7 +8,8 @@ import com.kaelkirk.events.OnPlayerOpenSuperBundle;
 public class SpigotPlugin extends JavaPlugin {
 
 
-  private NamespacedKey key;
+  private NamespacedKey superBundleKey;
+  private NamespacedKey buttonKey;
 
   @Override
   public void onDisable() {
@@ -22,7 +23,8 @@ public class SpigotPlugin extends JavaPlugin {
     // Commands enabled with following method must have entries in plugin.yml
     // getCommand("example").setExecutor(new ExampleCommand(this));
     System.out.println("Hello world from Super Bundles");
-    key = new NamespacedKey(this, "SUPER_BUNDLE");
-    getServer().getPluginManager().registerEvents(new OnPlayerOpenSuperBundle(this, key), this);
+    superBundleKey = new NamespacedKey(this, "SUPER_BUNDLE");
+    buttonKey = new NamespacedKey(this, "SUPER_BUNDLE_KEY");
+    getServer().getPluginManager().registerEvents(new OnPlayerOpenSuperBundle(this, superBundleKey, buttonKey), this);
   }
 }

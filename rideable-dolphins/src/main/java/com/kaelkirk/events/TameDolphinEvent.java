@@ -1,7 +1,6 @@
 package com.kaelkirk.events;
 
 import java.util.Random;
-import java.util.UUID;
 
 import org.bukkit.GameMode;
 import org.bukkit.Material;

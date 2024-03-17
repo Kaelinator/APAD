@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 
 import org.bukkit.Bukkit;
@@ -26,8 +25,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
 
-import de.tr7zw.nbtapi.NBTCompound;
-import de.tr7zw.nbtapi.NBTItem;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 
@@ -39,53 +36,33 @@ public class SuperBundle implements Listener {
   private Plugin plugin;
   private HumanEntity player;
   private int page;
-  private NamespacedKey key;
+  private NamespacedKey bundleKey;
+  private NamespacedKey buttonKey;
   
-  public SuperBundle(ItemStack superBundle, Plugin plugin, NamespacedKey key) {
+  public SuperBundle(ItemStack superBundle, Plugin plugin, NamespacedKey bundleKey, NamespacedKey buttonKey) {
     Bukkit.getServer().getPluginManager().registerEvents(this, plugin);
     this.plugin = plugin;
-    this.key = key;
+    this.bundleKey = bundleKey;
+    this.buttonKey = buttonKey;
 
     this.superBundle = superBundle;
     bundleInventory = Bukkit.createInventory(null, 54, Component.text("Super Bundle"));
 
     ItemMeta bundleMeta = superBundle.getItemMeta();
     PersistentDataContainer bundleContainer = bundleMeta.getPersistentDataContainer();
-    NBTItem nbtItem = new NBTItem(superBundle);
-    if (nbtItem.hasTag("inventory") && !bundleContainer.has(key)) {
-      // migrate bundle to persistentDataType
-      NBTCompound itemsCompound = nbtItem.getCompound("inventory");
-      contents = (ArrayList<ItemStack>) stringToContents(itemsCompound.getString("data"));
-      byte[] encodedContents = contentsToBytes(contents);
-      bundleContainer.set(key, PersistentDataType.BYTE_ARRAY, encodedContents);
-      superBundle.setItemMeta(bundleMeta);
-    }
 
-    if (!bundleContainer.has(key)) {
+    if (!bundleContainer.has(bundleKey)) {
       ArrayList<ItemStack> list = new ArrayList<ItemStack>();
       addPage(list);
       byte[] encodedContents = contentsToBytes(list);
       if (encodedContents == null && player != null) {
         player.sendMessage("Error E0");
       }
-      // itemsCompound.setString("data", encodedContents);
-      bundleContainer.set(key, PersistentDataType.BYTE_ARRAY, encodedContents);
+      bundleContainer.set(bundleKey, PersistentDataType.BYTE_ARRAY, encodedContents);
       superBundle.setItemMeta(bundleMeta);
     }
 
-
-    // if (!nbtItem.hasTag("inventory")) {
-    //   nbtItem.addCompound("inventory");
-    //   NBTCompound itemsCompound = nbtItem.getCompound("inventory");
-    //   String encodedContents = contentsToString(list);
-    //   if (encodedContents == null && player != null) {
-    //     player.sendMessage("Error has occurred");
-    //   }
-    //   itemsCompound.setString("data", encodedContents);
-    // }
-
-    // NBTCompound itemsCompound = nbtItem.getCompound("inventory");
-    byte[] encodedContents = bundleContainer.get(key, PersistentDataType.BYTE_ARRAY);
+    byte[] encodedContents = bundleContainer.get(bundleKey, PersistentDataType.BYTE_ARRAY);
 
     if (encodedContents.length >= (int) Math.pow(2, 21)) {
       player.sendMessage("Bundle too big!");
@@ -126,9 +103,10 @@ public class SuperBundle implements Listener {
     player = event.getWhoClicked();
 
     if (currentStack != null && currentStack.getType() != Material.AIR) {
-      NBTItem nbt = new NBTItem(currentStack);
-      if (nbt.hasTag("navigate")) {
-        page += nbt.getInteger("navigate");
+
+      int navigationValue = isNavigational(currentStack);
+      if (navigationValue != 0) {
+        page += navigationValue;
         if (page < 0) {
           page = 0;
         } else if ((page + 1) * 45 >= contents.size()) {
@@ -141,9 +119,9 @@ public class SuperBundle implements Listener {
     }
 
     if (previousStack != null && previousStack.getType() != Material.AIR) {
-      NBTItem nbt = new NBTItem(previousStack);
-      if (nbt.hasTag("navigate")) {
-        page += nbt.getInteger("navigate");
+      int navigationValue = isNavigational(currentStack);
+      if (navigationValue != 0) {
+        page += navigationValue;
         if (page < 0) {
           page = 0;
         } else if ((page + 1) * 45 >= contents.size()) {
@@ -166,8 +144,8 @@ public class SuperBundle implements Listener {
 
         for (int i = 0; i < bundleContent.size(); i++) {
           if (bundleContent.get(i) != null) {
-            NBTItem nbt = new NBTItem(bundleContent.get(i));
-            if (nbt.hasTag("navigate")) {
+
+            if (isNavigational(bundleContent.get(i)) != 0) {
               continue;
             }
           }
@@ -214,7 +192,7 @@ public class SuperBundle implements Listener {
 
         ItemMeta bundleMeta = superBundle.getItemMeta();
         PersistentDataContainer bundleContainer = bundleMeta.getPersistentDataContainer();
-        bundleContainer.set(key, PersistentDataType.BYTE_ARRAY, encodedContents);
+        bundleContainer.set(bundleKey, PersistentDataType.BYTE_ARRAY, encodedContents);
         superBundle.setItemMeta(bundleMeta);
       }
     }, 0);
@@ -259,42 +237,44 @@ public class SuperBundle implements Listener {
     ItemMeta nextMeta = nextButton.getItemMeta();
     nextMeta.addItemFlags(ItemFlag.HIDE_ITEM_SPECIFICS);
     nextMeta.displayName(Component.text("Go to page " + (page + 2)).decoration(TextDecoration.ITALIC, false));
+    PersistentDataContainer nextMetaContainer = nextMeta.getPersistentDataContainer();
+    nextMetaContainer.set(buttonKey, PersistentDataType.INTEGER, 1);
     nextButton.setItemMeta(nextMeta);
-    NBTItem nbt1 = new NBTItem(nextButton);
-    nbt1.setInteger("navigate", 1);
-    nextButton = nbt1.getItem();
+    bundleInventory.setItem(53, nextButton);
 
 
     if (page > 0) {
       ItemStack prevButton = new ItemStack(Material.STONE_BUTTON, page);
       ItemMeta prevMeta = prevButton.getItemMeta();
       prevMeta.addItemFlags(ItemFlag.HIDE_ITEM_SPECIFICS);
-      prevButton.setItemMeta(prevMeta);
       prevMeta.displayName(Component.text("Go to page " + (page)).decoration(TextDecoration.ITALIC, false));
-
-      NBTItem nbt2 = new NBTItem(prevButton);
-      nbt2.setInteger("navigate", -1);
-      prevButton = nbt2.getItem();
+      PersistentDataContainer prevMetaContainer = prevMeta.getPersistentDataContainer();
+      prevMetaContainer.set(buttonKey, PersistentDataType.INTEGER, -1);
+      prevButton.setItemMeta(prevMeta);
       bundleInventory.setItem(45, prevButton);
     }
-
-    bundleInventory.setItem(53, nextButton);
   }
 
-  public String contentsToString(List<ItemStack> contents) {
-    try {
-      ByteArrayOutputStream str = new ByteArrayOutputStream();
-      BukkitObjectOutputStream data = new BukkitObjectOutputStream(str);
-      data.writeInt(contents.size());
-      for (int i = 0; i < contents.size(); i++) {
-        data.writeObject(contents.get(i));
-      }
-      data.close();
-      return Base64.getEncoder().encodeToString(str.toByteArray());
-    } catch (Exception e) {
-      return null;
-      // e.printStackTrace();
+  /*
+   * returns the value of navigation if stack is navigational. I.e.
+   * Previous = -1; Next = 1
+   * 
+   * if the stack is not navigational, 0 is returned
+   */
+  private int isNavigational(ItemStack stack) {
+
+    if (stack == null || stack.getType() == Material.AIR) {
+      return 0;
     }
+
+    ItemMeta meta = stack.getItemMeta();
+    PersistentDataContainer container = meta.getPersistentDataContainer();
+
+    if (!container.has(buttonKey)) {
+      return 0;
+    }
+
+    return container.get(buttonKey, PersistentDataType.INTEGER);
   }
 
   public byte[] contentsToBytes(List<ItemStack> contents) {
@@ -308,26 +288,9 @@ public class SuperBundle implements Listener {
       data.close();
       return str.toByteArray();
     } catch (Exception e) {
+      e.printStackTrace();
       return null;
-      // e.printStackTrace();
     }
-  }
-
-  public List<ItemStack> stringToContents(String inventoryData) {
-    try {
-      ByteArrayInputStream stream = new ByteArrayInputStream(Base64.getDecoder().decode(inventoryData));
-      BukkitObjectInputStream data = new BukkitObjectInputStream(stream);
-      int size = data.readInt();
-      List<ItemStack> result = new ArrayList<ItemStack>(size);
-      for (int i = 0; i < size; i++) {
-        result.add((ItemStack) data.readObject());
-      }
-      data.close();
-      return result;
-    } catch (Exception e) {
-      // e.printStackTrace();
-    }
-    return null;
   }
 
   public List<ItemStack> bytesToContents(byte[] inventoryData) {
@@ -342,7 +305,7 @@ public class SuperBundle implements Listener {
       data.close();
       return result;
     } catch (Exception e) {
-      // e.printStackTrace();
+      e.printStackTrace();
     }
     return null;
   }

@@ -51,7 +51,16 @@ public class OnPlayerEverbladeKill implements Listener {
     Player damager = (Player) damagerEntity;
     ItemStack damagingItem = damager.getEquipment().getItemInMainHand();
 
+    if (damagingItem == null) {
+      return;
+    }
+
     ItemMeta meta = damagingItem.getItemMeta();
+
+    if (meta == null) {
+      return;
+    }
+
     PersistentDataContainer container = meta.getPersistentDataContainer();
 
     if (!container.has(key)) {

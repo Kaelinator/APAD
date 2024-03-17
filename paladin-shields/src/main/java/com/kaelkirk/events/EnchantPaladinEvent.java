@@ -50,6 +50,7 @@ public class EnchantPaladinEvent implements Listener {
     }
 
     Player enchanter = event.getEnchanter();
+    System.out.println("player enchantment seed" + enchanter.getEnchantmentSeed());
     random = new Random(enchanter.getEnchantmentSeed());
     setOffers(random, event.getEnchantmentBonus(), event.getOffers());
   }
@@ -78,7 +79,12 @@ public class EnchantPaladinEvent implements Listener {
     int chance = - cost + 40;
     EnchantingInventory inventory = (EnchantingInventory) event.getInventory();
     inventory.getSecondary().subtract(event.getLevelHint());
-    if (cost < 27 || random.nextInt(chance) != 0) {
+    int chosen = random.nextInt(chance);
+
+    player.setEnchantmentSeed(random.nextInt());
+    System.out.println("Attempted paladin at cost " + cost + " chose " + chosen + " new seed: " + player.getEnchantmentSeed());
+
+    if (cost < 27 || chosen != 0) {
       item.setItemMeta(meta);
       return;
     }
