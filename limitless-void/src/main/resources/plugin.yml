@@ -1,0 +1,16 @@
+name: LimitlessVoid
+version: 1.0
+description: A new forgotten dimension...
+author: Kaelinator
+website: twitch.tv/kaelinator17
+api-version: 1.20
+
+main: com.kaelkirk.LimitlessVoidPlugin
+
+commands:
+  wtp:
+    description: Teleport to a world
+    permission: op
+    usage: /wtp [world-name]
+
+permissions: {}
