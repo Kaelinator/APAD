@@ -50,6 +50,23 @@
           <include>plugin.yml</include>
         </includes>
       </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <!-- Keeping filtering at true here reduces plugin.yml redundancy! -->
+        <filtering>true</filtering>
+        <includes>
+          <include>config.yml</include>
+        </includes>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <!-- Keep filtering at false for other resources to prevent bad magic -->
+        <filtering>false</filtering>
+        <excludes>
+          <exclude>plugin.yml</exclude>
+          <exclude>config.yml</exclude>
+        </excludes>
+      </resource>
     </resources>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>

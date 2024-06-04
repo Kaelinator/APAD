@@ -8,9 +8,10 @@ api-version: 1.20
 main: com.kaelkirk.LimitlessVoidPlugin
 
 commands:
-  wtp:
-    description: Teleport to a world
+  world:
+    description: Teleport to or unload a world
     permission: op
-    usage: /wtp [world-name]
+    usage:
+          /world [list|tp|unload] [world-name|player-name] [world-name]
 
 permissions: {}
