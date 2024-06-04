@@ -60,10 +60,10 @@ public class TameDolphinEvent implements Listener {
       item.subtract(1);
     }
 
-    if (random.nextInt(10) != 0) {
-      world.spawnParticle(Particle.SMOKE_NORMAL, entity.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
-      return;
-    }
+    // if (random.nextInt(10) != 0) {
+    //   world.spawnParticle(Particle.SMOKE_NORMAL, entity.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
+    //   return;
+    // }
 
     /* you tamed the dolphin */
     container.set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
