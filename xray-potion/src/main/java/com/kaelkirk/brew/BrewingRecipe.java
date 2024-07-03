@@ -31,8 +31,8 @@ public class BrewingRecipe {
   public BrewingRecipe(ItemStack ingredient, ItemStack fuel, BrewAction action, boolean perfect, int fuelSet,
       int fuelCharge) {
     this.ingredient = ingredient;
-    this.fuel = (fuel == null ? new ItemStack(Material.AIR) : fuel);
     this.setFuelSet(fuelSet);
+    this.fuel = fuel;
     this.setFuelCharge(fuelCharge);
     this.action = action;
     this.perfect = perfect;
@@ -70,7 +70,7 @@ public class BrewingRecipe {
     this.clock = clock;
   }
 
-  public boolean isPerfect() {
+  public boolean requiresPerfection() {
     return perfect;
   }
 
@@ -80,23 +80,35 @@ public class BrewingRecipe {
 
   public static BrewingRecipe getRecipe(BrewerInventory inventory) {
     for (BrewingRecipe recipe : BrewingRecipe.recipes) {
-      if (inventory.getFuel() == null || inventory.getFuel().getType() == Material.AIR) {
-        if (!recipe.isPerfect() && inventory.getIngredient().getType() == recipe.getIngredient().getType()) {
+
+      boolean fuelSpecified = recipe.fuel != null;
+      boolean ingredientMatches =
+        inventory.getIngredient().isSimilar(recipe.getIngredient()) // ingredient is perfect
+        || (!recipe.requiresPerfection() && inventory.getIngredient().getType() == recipe.getIngredient().getType()); // vs type only matches
+
+      if (!fuelSpecified) {
+        if (ingredientMatches) {
           return recipe;
-        }
-        if (recipe.isPerfect() && inventory.getIngredient().isSimilar(recipe.getIngredient())) {
-          return recipe;
-        }
-      } else {
-        if (!recipe.isPerfect() && inventory.getIngredient().getType() == recipe.getIngredient().getType() &&
-            inventory.getFuel().getType() == recipe.getFuel().getType()) {
-          return recipe;
-        }
-        if (recipe.isPerfect() && inventory.getIngredient().isSimilar(recipe.getIngredient()) &&
-            inventory.getFuel().isSimilar(recipe.getFuel())) {
-          return recipe;
-        }
+        } 
+        continue;
       }
+
+      // fuel was specified
+      if (inventory.getFuel() == null) {
+        if (recipe.getFuel().getType() == Material.AIR) {
+          return recipe;
+        }
+        continue;
+      }
+
+      boolean fuelMatches =
+        inventory.getFuel().isSimilar(recipe.getFuel()) // fuel is perfect
+        || (!recipe.requiresPerfection() && inventory.getFuel().getType() == recipe.getFuel().getType()); // vs type only matches
+
+      if (fuelMatches && ingredientMatches) {
+        return recipe;
+      }
+
     }
     return null;
   }

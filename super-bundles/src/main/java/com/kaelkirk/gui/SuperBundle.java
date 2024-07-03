@@ -187,6 +187,7 @@ public class SuperBundle implements Listener {
         byte[] encodedContents = contentsToBytes(contents);
         if (encodedContents.length >= (int) Math.pow(2, 21)) {
           player.sendMessage("Bundle too big!");
+          System.err.println(player.getName() + "'s bundle is too big!");
           return;
         }
 

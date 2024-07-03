@@ -63,7 +63,7 @@ public class LimitlessVoidPlugin extends JavaPlugin {
 
     getLogger().log(Level.INFO, "LimitlessVoid enabled! Loaded " + extraWorlds.size() + " extra world" + (extraWorlds.size() == 1 ? "!" : "s!"));
     getServer().getPluginManager().registerEvents(new PlayerFallIntoVoid(limitlessVoidWorld, overworld), this);
-    getServer().getPluginManager().registerEvents(new BlockMobSpawn(), this);
+    getServer().getPluginManager().registerEvents(new BlockMobSpawn(limitlessVoidWorld), this);
   }
 
   @Override

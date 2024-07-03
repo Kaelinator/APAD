@@ -87,8 +87,13 @@ public class XRayManager {
     public void run() {
       /* apply the effect for players with x-ray effect */
 
-      if (timeLeft <= 0 || player == null) {
+
+      if (timeLeft <= 0) {
         stopXRayEffect();
+        return;
+      }
+
+      if (player == null) {
         return;
       }
 

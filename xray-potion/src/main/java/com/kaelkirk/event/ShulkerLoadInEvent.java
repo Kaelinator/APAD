@@ -60,8 +60,8 @@ public class ShulkerLoadInEvent implements PacketListener {
     if (owner.length() == 0) {
       return;
     }
-    
-    String ownerId = owner.substring(9, 36);
+
+    String ownerId = owner.substring(1, 37);
     if (!event.getPlayer().getUniqueId().toString().equals(ownerId)) {
       event.setCancelled(true);
     }

@@ -48,6 +48,7 @@ public class PlayerDrinkXRayPotion implements Listener {
       return;
     }
 
+    System.out.println("Player " + player.getName() + " sees " + toSee);
     new XRayManager(plugin, player, toSee);
   }
 

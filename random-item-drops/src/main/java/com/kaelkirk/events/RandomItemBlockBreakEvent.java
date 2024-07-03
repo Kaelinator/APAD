@@ -64,7 +64,11 @@ public class RandomItemBlockBreakEvent implements Listener {
 
     // f(0) = 1
     // f(0.05) = 4
-    // f(1) = 20
+    // f(1) = never drop
+    if (breakSpeed == 1) {
+      return;
+    }
+
     int chance = (int) Math.floor(Math.pow(1000 * breakSpeed, 0.33333d) + breakSpeed * 10);
 
     int randomNumber = random.nextInt(chance); 
