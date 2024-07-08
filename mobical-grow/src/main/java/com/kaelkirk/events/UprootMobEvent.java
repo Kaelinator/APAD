@@ -11,8 +11,16 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockFadeEvent;
 
+import com.kaelkirk.util.MobicalManager;
+
 public class UprootMobEvent implements Listener {
-  
+
+  private MobicalManager manager;
+
+  public UprootMobEvent(MobicalManager manager) {
+    this.manager = manager;
+  }
+
   @EventHandler
   public void onTrample(BlockFadeEvent event) {
     if (event.isCancelled()) {
@@ -55,7 +63,8 @@ public class UprootMobEvent implements Listener {
         continue;
       }
       LivingEntity mob = (LivingEntity) entity;
-      if (!mob.hasAI()) { // TODO: replace with a check for an NBT tag
+      if (manager.isMobical(mob)) {
+        manager.unsetMobical(mob);
         mob.setAI(true);
       }
     }
