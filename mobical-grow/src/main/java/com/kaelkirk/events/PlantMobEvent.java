@@ -71,13 +71,15 @@ public class PlantMobEvent implements Listener {
     mob.setInvulnerable(true);
     // placed into block
     float yaw = mob.getBodyYaw();
-    Location blockLocation = block.getLocation().clone();
+    Location mobLocation = mob.getLocation();
+    Location blockLocation = block.getLocation();
     blockLocation.add(0.5, 0.5, 0.5);
     mob.teleport(blockLocation);
     // mob.setBodyYaw(yaw);
     mob.setRotation(yaw, 0);
     
     mob.setLeashHolder(null);
+    mobLocation.getWorld().dropItemNaturally(mobLocation, new ItemStack(Material.LEAD, 1));
   }
 
 

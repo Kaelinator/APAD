@@ -18,9 +18,11 @@ import com.kaelkirk.util.MobicalManager;
 public class PlayerFarmMobEvent implements Listener {
 
   private MobicalManager manager;
+  private Random random;
 
   public PlayerFarmMobEvent(MobicalManager manager) {
     this.manager = manager;
+    random = new Random();
   }
 
   @EventHandler
@@ -46,13 +48,13 @@ public class PlayerFarmMobEvent implements Listener {
       return;
     }
 
-    mobAge.setAge(-1200);
+    mobAge.setAge(-random.nextInt(12000, 48000));
 
-    LootTable lootTable = ((Lootable)mob).getLootTable();
+    LootTable lootTable = ((Lootable) mob).getLootTable();
     Collection<ItemStack> itemStacks = lootTable.populateLoot(new Random(), new LootContext.Builder(mob.getLocation()).killer(event.getPlayer()).lootedEntity(mob).luck(10).build());
 
     for (ItemStack item : itemStacks) {
-      mob.getWorld().dropItemNaturally(mob.getLocation().clone().add(0, 2, 0), item);
+      mob.getWorld().dropItemNaturally(mob.getLocation().add(0, 0.5, 0), item);
     }
   }
 }
