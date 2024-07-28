@@ -54,7 +54,7 @@ public class CandlePopulator extends BlockPopulator {
         spawnerState.setMinSpawnDelay(0);
         spawnerState.setMaxSpawnDelay(1);
         spawnerState.setRequiredPlayerRange(3);
-        spawnerState.setSpawnedType(EntityType.PRIMED_TNT);
+        spawnerState.setSpawnedType(EntityType.TNT);
         spawnerState.setSpawnCount(50);
         spawnerState.update();
         limitedRegion.setBlockState(spawnerLocation.toVector(), spawnerState);

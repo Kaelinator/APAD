@@ -43,7 +43,6 @@ public class OnPlayerEnchantEverblade implements Listener {
 
     int cost = event.getExpLevelCost();
     if (cost < 27) {
-      System.out.println("cost too low to be an Everblade");
       return;
     }
 

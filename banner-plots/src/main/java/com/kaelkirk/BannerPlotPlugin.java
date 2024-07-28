@@ -56,16 +56,10 @@ public class BannerPlotPlugin extends JavaPlugin {
   );
 
   @Override
-  public void onDisable() {
-    // Don't log disabling, Spigot does that for you automatically!
-  }
+  public void onDisable() { }
 
   @Override
   public void onEnable() {
-    // Don't log enabling, Spigot does that for you automatically!
-
-    // Commands enabled with following method must have entries in plugin.yml
-    System.out.println("Hello world from BannerPlots!");
     key = new NamespacedKey(this, "BANNER_PLOT");
     registry = new BannerPlotRegistry(key);
     getServer().getPluginManager().registerEvents(new DropSkullEvent(), this);
@@ -73,7 +67,6 @@ public class BannerPlotPlugin extends JavaPlugin {
     getServer().getPluginManager().registerEvents(new PvPInPlot(), this);
     getServer().getPluginManager().registerEvents(new BannerDestroyedEvent(this, registry), this);
     getCommand("listbannerplots").setExecutor(new ListBannerPlots(registry));
-
   }
 
 }

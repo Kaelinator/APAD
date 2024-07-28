@@ -28,15 +28,10 @@ public class LimitlessVoidPlugin extends JavaPlugin {
   private World overworld;
 
   @Override
-  public void onDisable() {
-    // Don't log disabling, Spigot does that for you automatically!
-  }
+  public void onDisable() { }
 
   @Override
   public void onEnable() {
-    // Don't log enabling, Spigot does that for you automatically!
-
-    // Commands enabled with following method must have entries in plugin.yml
     this.saveDefaultConfig();
     getCommand("world").setExecutor(new WorldCommandHandler());
 
@@ -61,7 +56,7 @@ public class LimitlessVoidPlugin extends JavaPlugin {
       new WorldCreator(worldName).createWorld();
     }
 
-    getLogger().log(Level.INFO, "LimitlessVoid enabled! Loaded " + extraWorlds.size() + " extra world" + (extraWorlds.size() == 1 ? "!" : "s!"));
+    getLogger().log(Level.INFO, "Loaded " + extraWorlds.size() + " extra world" + (extraWorlds.size() == 1 ? "!" : "s!"));
     getServer().getPluginManager().registerEvents(new PlayerFallIntoVoid(limitlessVoidWorld, overworld), this);
     getServer().getPluginManager().registerEvents(new BlockMobSpawn(limitlessVoidWorld), this);
   }
