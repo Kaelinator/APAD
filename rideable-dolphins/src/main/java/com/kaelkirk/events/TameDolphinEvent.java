@@ -51,7 +51,7 @@ public class TameDolphinEvent implements Listener {
     PersistentDataContainer container = entity.getPersistentDataContainer();
 
     if (container.has(ownerKey)) {
-      world.spawnParticle(Particle.SMOKE_NORMAL, entity.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
+      world.spawnParticle(Particle.SMOKE, entity.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
       return;
     }
 
@@ -61,7 +61,7 @@ public class TameDolphinEvent implements Listener {
     }
 
     if (random.nextInt(10) != 0) {
-      world.spawnParticle(Particle.SMOKE_NORMAL, entity.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
+      world.spawnParticle(Particle.SMOKE, entity.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
       return;
     }
 

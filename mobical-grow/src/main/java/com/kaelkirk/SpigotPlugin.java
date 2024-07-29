@@ -13,18 +13,12 @@ public class SpigotPlugin extends JavaPlugin {
   private NamespacedKey mobicalKey;
 
   @Override
-  public void onDisable() {
-    // Don't log disabling, Spigot does that for you automatically!
-  }
+  public void onDisable() { }
 
   @Override
   public void onEnable() {
-    // Don't log enabling, Spigot does that for you automatically!
-
-    // Commands enabled with following method must have entries in plugin.yml
     mobicalKey = new NamespacedKey(this, "MOBICAL_GROW");
     MobicalManager manager = new MobicalManager(mobicalKey);
-    System.out.println("Hello world from Mobical Grow");
     getServer().getPluginManager().registerEvents(new PlantMobEvent(manager), this);
     getServer().getPluginManager().registerEvents(new UprootMobEvent(manager), this);
     getServer().getPluginManager().registerEvents(new PlayerFarmMobEvent(manager), this);

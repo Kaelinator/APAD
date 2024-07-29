@@ -9,7 +9,6 @@ import org.bukkit.material.MaterialData;
 
 import com.kaelkirk.util.WeightedTreeNode;
 
-@SuppressWarnings("deprecation")
 public class RandomItemPicker {
 
   private Random random;

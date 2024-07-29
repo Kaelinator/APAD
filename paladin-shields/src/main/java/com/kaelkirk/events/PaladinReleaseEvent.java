@@ -120,7 +120,6 @@ public class PaladinReleaseEvent implements Listener {
         || isPointWithinCone(entity.getBoundingBox().getCenter(), playerEyeVector, playerDirection, 4, 2)
         || isPointWithinCone(entity.getEyeLocation().toVector(), playerEyeVector, playerDirection, 4, 2)) {
 
-        System.out.println(playerDirection.getX() + " " + playerDirection.getY() + " " + playerDirection.getZ());
         entity.knockback(totalBlockedDamage / 10, knockbackDirection.getX(), knockbackDirection.getZ());
         entity.damage(totalBlockedDamage, player);
       }
