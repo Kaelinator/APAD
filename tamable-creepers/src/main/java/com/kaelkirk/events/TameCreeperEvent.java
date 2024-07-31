@@ -61,7 +61,7 @@ public class TameCreeperEvent implements Listener {
     }
 
     if (container.has(ownerKey, PersistentDataType.STRING)) {
-      world.spawnParticle(Particle.SMOKE_NORMAL, tamee.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
+      world.spawnParticle(Particle.SMOKE, tamee.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
       return;
     }
 
@@ -70,7 +70,7 @@ public class TameCreeperEvent implements Listener {
     }
 
     if (random.nextInt(10) != 0) {
-      world.spawnParticle(Particle.SMOKE_NORMAL, tamee.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
+      world.spawnParticle(Particle.SMOKE, tamee.getLocation().add(0, 1, 0), 10, 0.25, 0.25, 0.25, 0);
       return;
     }
 

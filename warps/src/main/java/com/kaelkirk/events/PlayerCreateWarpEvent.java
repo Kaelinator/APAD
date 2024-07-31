@@ -66,7 +66,7 @@ public class PlayerCreateWarpEvent implements Listener {
   public void onPlayerCreateWarp(EntityPlaceEvent event) {
     Player player = event.getPlayer();
 
-    if (event.getEntityType() != EntityType.ENDER_CRYSTAL) {
+    if (event.getEntityType() != EntityType.END_CRYSTAL) {
       return;
     }
 
@@ -108,7 +108,7 @@ public class PlayerCreateWarpEvent implements Listener {
     Location bedrockLocation = block.getLocation();
     for (Entity entity : block.getChunk().getEntities()) {
       EntityType type = entity.getType();
-      if (type != EntityType.ITEM_FRAME && type != EntityType.ENDER_CRYSTAL) {
+      if (type != EntityType.ITEM_FRAME && type != EntityType.END_CRYSTAL) {
         continue;
       }
 
@@ -135,7 +135,7 @@ public class PlayerCreateWarpEvent implements Listener {
         continue;
       }
 
-      if (type == EntityType.ENDER_CRYSTAL) {
+      if (type == EntityType.END_CRYSTAL) {
 
         if (isSameLocation(bedrockLocation.clone().add(0, 1, 0), entityLocation)) {
           hasValidEnderCrystal = true;

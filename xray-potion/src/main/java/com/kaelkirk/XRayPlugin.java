@@ -1,5 +1,7 @@
 package com.kaelkirk;
 
+import java.util.Set;
+
 import org.bukkit.Material;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -16,26 +18,21 @@ import com.kaelkirk.manager.XRayManager;
 public class XRayPlugin extends JavaPlugin {
 
   public static final String X_RAY_SHULKER_OWNER_KEY = "CustomName";
+  private static final Set<Material> FORBIDDEN = Set.of();
   private ProtocolManager protocolManager;
 
   @Override
   public void onDisable() {
-    // Don't log disabling, Spigot does that for you automatically!
     XRayManager.stopAllXRayEffects();
   }
 
   @Override
   public void onEnable() {
-    // Don't log enabling, Spigot does that for you automatically!
-
-    // Commands enabled with following method must have entries in plugin.yml
-    // getCommand("example").setExecutor(new ExampleCommand(this));
-    System.out.println("Hello world from X-Ray Potions");
     BrewingRecipe.setPlugin(this);
     new BrewingRecipe(Material.GLASS, new BaseXRayBrew());
 
     for (Material type : Material.values()) {
-      if (type.isBlock() && type.isSolid() && !type.isAir()) {
+      if (type.isBlock() && type.isSolid() && !type.isAir() && !FORBIDDEN.contains(type) && type.asItemType() != null) {
         new BrewingRecipe(type, new BlockXRayBrew());
       }
     }

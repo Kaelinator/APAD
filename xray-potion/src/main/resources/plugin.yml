@@ -3,7 +3,7 @@ version: 1.0
 description: Brew and use X-Ray potions!
 author: Kaelinator
 website: twitch.tv/kaelinator17
-api-version: 1.20
+api-version: 1.21
 
 main: com.kaelkirk.XRayPlugin
 

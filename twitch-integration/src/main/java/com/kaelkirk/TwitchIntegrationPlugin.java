@@ -2,6 +2,7 @@ package com.kaelkirk;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.logging.Level;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -57,16 +58,12 @@ public class TwitchIntegrationPlugin extends JavaPlugin {
         // ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor)Executors.newFixedThreadPool(1);
         endpoint.setExecutor(null);
         endpoint.start();
-
+        this.getLogger().log(Level.INFO, "Started OAuth endpoint");
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
-    // Commands enabled with following method must have entries in plugin.yml
-    // getCommand("example").setExecutor(new ExampleCommand(this));
-
-    System.out.println("Hello world from Twitch");
   }
 
 }

@@ -38,11 +38,6 @@ public class SpigotPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    // Don't log enabling, Spigot does that for you automatically!
-
-    // Commands enabled with following method must have entries in plugin.yml
-    // getCommand("example").setExecutor(new ExampleCommand(this));
-    System.out.println("Hello world from Telekinesis");
     getServer().getPluginManager().registerEvents(new PlayerUseTelekinesis(this), this);
   }
 }

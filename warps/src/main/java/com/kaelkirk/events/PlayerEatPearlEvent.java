@@ -84,7 +84,7 @@ public class PlayerEatPearlEvent implements Listener {
     Location playerLocation = player.getEyeLocation();
     Location particleLocation = playerLocation.add(playerLocation.getDirection().multiply(0.4));
 
-    world.spawnParticle(Particle.ITEM_CRACK, particleLocation, 5, 0.1, -1.0, 0.1, 0, new ItemStack(Material.ENDER_PEARL));
+    world.spawnParticle(Particle.ITEM, particleLocation, 5, 0.1, -1.0, 0.1, 0, new ItemStack(Material.ENDER_PEARL));
     world.playSound(player, Sound.ENTITY_GENERIC_EAT, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
     if (eatTime < 8) {
