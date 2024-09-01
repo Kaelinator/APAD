@@ -8,12 +8,15 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -21,9 +24,7 @@ import org.bukkit.potion.PotionEffectType;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
-import com.kaelkirk.XRayPlugin;
 
-import de.tr7zw.nbtapi.NBTEntity;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 public class XRayManager {
@@ -45,10 +46,12 @@ public class XRayManager {
   
   private final PotionEffect GLOW_EFFECT = new PotionEffect(PotionEffectType.GLOWING, DURATION, 0, true, false);
   private final PotionEffect INVISIBLE_EFFECT = new PotionEffect(PotionEffectType.INVISIBILITY, DURATION, 0, true, false);
+  private final NamespacedKey key;
 
-  public XRayManager(Plugin plugin, Player player, Material toSee) {
+  public XRayManager(Plugin plugin, NamespacedKey key, Player player, Material toSee) {
     this.player = player;
     this.toSee = toSee;
+    this.key = key;
     this.playerId = player.getUniqueId();
     reSearchTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new BlockSearcher(), 0, RE_SEARCH_DELAY);
     if (managers == null) {
@@ -184,14 +187,15 @@ public class XRayManager {
   private Entity spawnShulker(Block block) {
     World world = block.getWorld();
 
-    Entity shulker = world.spawnEntity(block.getLocation(), EntityType.SHULKER);
-    NBTEntity shulkerNbt = new NBTEntity(shulker);
-    shulkerNbt.setBoolean("NoAI", true);
-    shulkerNbt.setBoolean("Invulnerable", true);
-    shulkerNbt.setBoolean("Silent", true);
-    shulkerNbt.setString(XRayPlugin.X_RAY_SHULKER_OWNER_KEY, "\"" + playerId.toString() + "\"");
-    GLOW_EFFECT.apply((LivingEntity) shulker);
-    INVISIBLE_EFFECT.apply((LivingEntity) shulker);
+    LivingEntity shulker = (LivingEntity) world.spawnEntity(block.getLocation(), EntityType.SHULKER);
+    shulker.setAI(false);
+    shulker.setInvulnerable(true);
+    shulker.setInvisible(true);
+    shulker.setSilent(true);
+    shulker.setGlowing(true);
+    PersistentDataContainer container = shulker.getPersistentDataContainer();
+    container.set(key, PersistentDataType.STRING, playerId.toString());
+
     PacketContainer destroyPacket = new PacketContainer(PacketType.Play.Server.ENTITY_DESTROY);
     destroyPacket.getModifier().write(0, new IntArrayList(new int[] { shulker.getEntityId() }));
     for (Player notThePlayer : world.getPlayers()) {

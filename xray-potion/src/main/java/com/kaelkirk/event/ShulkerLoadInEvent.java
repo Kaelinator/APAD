@@ -1,7 +1,10 @@
 package com.kaelkirk.event;
 
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import com.comphenix.protocol.PacketType;
@@ -10,16 +13,15 @@ import com.comphenix.protocol.events.ListeningWhitelist;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.events.PacketListener;
-import com.kaelkirk.XRayPlugin;
-
-import de.tr7zw.nbtapi.NBTEntity;
 
 public class ShulkerLoadInEvent implements PacketListener {
 
   private Plugin plugin;
+  private final NamespacedKey key;
 
-  public ShulkerLoadInEvent(Plugin plugin) {
+  public ShulkerLoadInEvent(Plugin plugin, NamespacedKey key) {
     this.plugin = plugin;
+    this.key = key;
   }
 
   @Override
@@ -45,23 +47,24 @@ public class ShulkerLoadInEvent implements PacketListener {
 
   @Override
   public void onPacketSending(PacketEvent event) {
-    PacketContainer container = event.getPacket();
-    EntityType type = container.getEntityTypeModifier().read(0);
+    PacketContainer packet = event.getPacket();
+    EntityType type = packet.getEntityTypeModifier().read(0);
 
     if (type != EntityType.SHULKER) {
       return;
     }
 
-    Entity entity = container.getEntityModifier(event).read(0);
+    Entity entity = packet.getEntityModifier(event).read(0);
 
 
-    NBTEntity shulkerNbt = new NBTEntity(entity);
-    String owner = shulkerNbt.getString(XRayPlugin.X_RAY_SHULKER_OWNER_KEY);
-    if (owner.length() == 0) {
+
+    PersistentDataContainer container = entity.getPersistentDataContainer();
+    String ownerId = container.get(key, PersistentDataType.STRING);
+
+    if (ownerId == null || ownerId.length() == 0) {
       return;
     }
 
-    String ownerId = owner.substring(1, 37);
     if (!event.getPlayer().getUniqueId().toString().equals(ownerId)) {
       event.setCancelled(true);
     }

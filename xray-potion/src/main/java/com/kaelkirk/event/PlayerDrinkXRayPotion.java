@@ -1,55 +1,59 @@
 package com.kaelkirk.event;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 import com.kaelkirk.brew.BaseXRayBrew;
-import com.kaelkirk.brew.BlockXRayBrew;
 import com.kaelkirk.manager.XRayManager;
-
-import de.tr7zw.nbtapi.NBTItem;
 
 public class PlayerDrinkXRayPotion implements Listener {
 
   private Plugin plugin;
+  private final NamespacedKey key;
 
-  public PlayerDrinkXRayPotion(Plugin plugin) {
+  public PlayerDrinkXRayPotion(Plugin plugin, NamespacedKey key) {
     this.plugin = plugin;
+    this.key = key;
   }
   
   @EventHandler
   public void onPlayerDrinkPotionEvent(PlayerItemConsumeEvent event) {
-    ItemStack itemConsumed = event.getItem();
+    ItemStack item = event.getItem();
     
-    if (itemConsumed.getType() != Material.POTION) {
+    if (item.getType() != Material.POTION) {
       return;
     }
 
-    NBTItem item = new NBTItem(itemConsumed);
+    PersistentDataContainer container = item.getItemMeta().getPersistentDataContainer();
 
-    if (!item.hasTag(BaseXRayBrew.KEY) || !item.getString(BaseXRayBrew.KEY).equals(BaseXRayBrew.ID)) {
+    if (!container.has(key)) {
       return;
     }
 
-    if (!item.hasTag(BlockXRayBrew.KEY)) {
+    String materialName = container.get(key, PersistentDataType.STRING);
+
+    if (materialName.equals(BaseXRayBrew.ID)) {
       return;
     }
 
-    Material toSee = Material.getMaterial(item.getString(BlockXRayBrew.KEY));
+    Material toSee = Material.getMaterial(materialName);
     Player player = event.getPlayer();
 
     if (toSee == null) {
-      player.sendMessage("Invalid brew " + item.getString(BlockXRayBrew.KEY));
+      System.err.println("Invalid brew " + materialName);
       return;
     }
 
     System.out.println("Player " + player.getName() + " sees " + toSee);
-    new XRayManager(plugin, player, toSee);
+    new XRayManager(plugin, key, player, toSee);
   }
 
 

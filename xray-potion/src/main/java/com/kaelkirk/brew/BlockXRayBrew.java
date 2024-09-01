@@ -4,22 +4,28 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.bukkit.Color;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.BrewerInventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionType;
 
-import de.tr7zw.nbtapi.NBTItem;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
 public class BlockXRayBrew extends BrewAction {
 
-  public static final String KEY = "X_RAY";
+  private final NamespacedKey key;
+
+  public BlockXRayBrew(NamespacedKey key) {
+    this.key = key;
+  }
 
   @Override
   public void brew(BrewerInventory inventory, ItemStack brewedItem, ItemStack ingredient) {
@@ -29,24 +35,15 @@ public class BlockXRayBrew extends BrewAction {
     }
     PotionMeta potionMeta = (PotionMeta) meta;
     PotionType brewedItemPotionType = potionMeta.getBasePotionType();
-    NBTItem brewedItemNbt = new NBTItem(brewedItem);
+    PersistentDataContainer container = potionMeta.getPersistentDataContainer();
 
     if (brewedItemPotionType != PotionType.AWKWARD) {
       return;
     }
 
-    if (!brewedItemNbt.hasTag(BaseXRayBrew.KEY) && !brewedItemNbt.getString(BaseXRayBrew.KEY).equals(BaseXRayBrew.ID)) {
+    if (!container.has(key) && !container.get(key, PersistentDataType.STRING).equals(BaseXRayBrew.ID)) {
       return;
     }
-
-    if (brewedItemNbt.hasTag(KEY)) {
-      return;
-    }
-    
-    for (HumanEntity h : inventory.getViewers()) {
-      h.sendMessage("you brewed an xray potion");
-    }
-
 
     potionMeta.setColor(Color.GRAY);
     Component name = Component.text("Potion of X-Ray Vision").decoration(TextDecoration.ITALIC, false);
@@ -64,10 +61,13 @@ public class BlockXRayBrew extends BrewAction {
     ItemStack[] contents = inventory.getContents();
     for (int i = 0; i < contents.length; i++) {
       if (contents[i] != null && contents[i].equals(brewedItem)) {
+        container.set(key, PersistentDataType.STRING, ingredient.getType().toString());
         brewedItem.setItemMeta(potionMeta);
-        NBTItem newPotionNbt = new NBTItem(brewedItem);
-        newPotionNbt.setString(KEY, ingredient.getType().toString());
-        inventory.setItem(i, newPotionNbt.getItem());
+        inventory.setItem(i, brewedItem);
+
+        for (HumanEntity h : inventory.getViewers()) {
+          h.sendMessage("you brewed an xray potion for " + inventory.getItem(i).getItemMeta().getPersistentDataContainer().get(key, PersistentDataType.STRING));
+        }
       }
     }
 

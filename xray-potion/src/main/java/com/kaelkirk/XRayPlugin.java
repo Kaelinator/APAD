@@ -3,6 +3,7 @@ package com.kaelkirk;
 import java.util.Set;
 
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.comphenix.protocol.ProtocolLibrary;
@@ -17,7 +18,7 @@ import com.kaelkirk.manager.XRayManager;
 
 public class XRayPlugin extends JavaPlugin {
 
-  public static final String X_RAY_SHULKER_OWNER_KEY = "CustomName";
+  private final NamespacedKey key = new NamespacedKey(this, "CUSTOM_POTION");
   private static final Set<Material> FORBIDDEN = Set.of();
   private ProtocolManager protocolManager;
 
@@ -29,17 +30,17 @@ public class XRayPlugin extends JavaPlugin {
   @Override
   public void onEnable() {
     BrewingRecipe.setPlugin(this);
-    new BrewingRecipe(Material.GLASS, new BaseXRayBrew());
+    new BrewingRecipe(Material.GLASS, new BaseXRayBrew(key));
 
     for (Material type : Material.values()) {
       if (type.isBlock() && type.isSolid() && !type.isAir() && !FORBIDDEN.contains(type) && type.asItemType() != null) {
-        new BrewingRecipe(type, new BlockXRayBrew());
+        new BrewingRecipe(type, new BlockXRayBrew(key));
       }
     }
 
     getServer().getPluginManager().registerEvents(new PotionEvent(), this);
-    getServer().getPluginManager().registerEvents(new PlayerDrinkXRayPotion(this), this);
-      protocolManager = ProtocolLibrary.getProtocolManager();
-    protocolManager.addPacketListener(new ShulkerLoadInEvent(this));
+    getServer().getPluginManager().registerEvents(new PlayerDrinkXRayPotion(this, key), this);
+    protocolManager = ProtocolLibrary.getProtocolManager();
+    protocolManager.addPacketListener(new ShulkerLoadInEvent(this, key));
   }
 }

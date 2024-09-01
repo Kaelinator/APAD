@@ -10,12 +10,13 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.v1_20_R2.CraftServer;
-import org.bukkit.craftbukkit.v1_20_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_20_R2.entity.CraftEntity;
-import org.bukkit.craftbukkit.v1_20_R2.entity.CraftPlayer;
-import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_21_R1.CraftServer;
+import org.bukkit.craftbukkit.v1_21_R1.CraftWorld;
+import org.bukkit.craftbukkit.v1_21_R1.entity.CraftEntity;
+import org.bukkit.craftbukkit.v1_21_R1.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_21_R1.inventory.CraftItemStack;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -24,8 +25,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import com.google.gson.Gson;
@@ -35,7 +37,9 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.datafixers.util.Pair;
 
-import net.minecraft.network.protocol.game.ClientboundMoveEntityPacket;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
@@ -48,13 +52,16 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 
 public class PlayerBackflipTracker implements Runnable, Listener {
 
+  private static Plugin plugin;
+  private static NamespacedKey backflippingKey;
+
   private final double BACKFLIP_THRESHOLD = 0.1;
   private double yVelocity;
-  private static Plugin plugin;
   private Player player;
   private int taskId;
   private ArmorStand armorStand;
@@ -70,8 +77,9 @@ public class PlayerBackflipTracker implements Runnable, Listener {
     currentlyBackflipping = false;
   }
 
-  public static void register(Plugin plugin) {
+  public static void register(Plugin plugin, NamespacedKey backflippingKey) {
     PlayerBackflipTracker.plugin = plugin;
+    PlayerBackflipTracker.backflippingKey = backflippingKey;
   }
 
   public void stop() {
@@ -82,9 +90,13 @@ public class PlayerBackflipTracker implements Runnable, Listener {
       return;
     }
 
-    player.setGameMode(player.getPreviousGameMode());
-    player.teleport(location);
-    player.setVelocity(initialVelocity);
+    if (player != null) {
+      player.setGameMode(player.getPreviousGameMode());
+      player.teleport(location);
+      player.setVelocity(initialVelocity);
+      PersistentDataContainer container = player.getPersistentDataContainer();
+      container.remove(backflippingKey);
+    }
 
     if (armorStand != null) {
       armorStand.remove();
@@ -121,20 +133,30 @@ public class PlayerBackflipTracker implements Runnable, Listener {
     }
 
     l = l.add(initialVelocity);
-    l.setPitch(l.getPitch() + 30f);
-
-    Player fakePlayer = (Player) serverPlayer.getBukkitEntity();
-    fakePlayer.setGliding(true);
-    ((CraftEntity) armorStand).getHandle().moveTo(l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch());
-    float clampedPitch = Math.min(l.getPitch(), 127);
-    float yOffset = (float) Math.sin(Math.toRadians((clampedPitch + 90) / 2)) * 2;
+    l.setPitch(l.getPitch() + 25f);
     player.setSpectatorTarget(armorStand);
 
+    Player fakePlayer = (Player) serverPlayer.getBukkitEntity();
+    ((CraftEntity) armorStand).getHandle().moveTo(l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch());
+
+    fakePlayer.setGliding(true);
+
+    float clampedPitch = Math.min(l.getPitch(), 127);
+    float yOffset = (float) Math.sin(Math.toRadians(clampedPitch + 90) / 2) * 2;
     serverPlayer.moveTo(l.getX(), l.getY() + yOffset, l.getZ(), l.getYaw(), clampedPitch);
     for (Player p : player.getWorld().getPlayers()) {
       ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
       connection.send(new ClientboundTeleportEntityPacket(serverPlayer));
     }
+
+    List<SynchedEntityData.DataValue<?>> data = serverPlayer.getEntityData().packDirty();
+    if (data != null) {
+      for (Player p : player.getWorld().getPlayers()) {
+        ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
+        connection.send(new ClientboundSetEntityDataPacket(serverPlayer.getId(), data));
+      }
+    }
+
   }
 
   @EventHandler
@@ -158,17 +180,21 @@ public class PlayerBackflipTracker implements Runnable, Listener {
 
     currentlyBackflipping = true;
 
+    PersistentDataContainer container = player.getPersistentDataContainer();
+    container.set(backflippingKey, PersistentDataType.STRING, player.getGameMode().toString());
+
     World world = player.getWorld();
     location = player.getLocation();
     initialVelocity = player.getVelocity();
-    Vector direction = location.getDirection();
+    Location straightUp = location.clone();
+    straightUp.setPitch(-90);
 
     armorStand = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
-    armorStand.setHeadPose(new EulerAngle(direction.getX(), direction.getY(), direction.getZ()));
     armorStand.setVisible(false);
     armorStand.setInvulnerable(true);
     armorStand.setSilent(true);
     armorStand.setAI(false);
+    ((CraftEntity) armorStand).getHandle().moveTo(straightUp.getX(), straightUp.getY(), straightUp.getZ(), straightUp.getYaw(), straightUp.getPitch());
     player.setGameMode(GameMode.SPECTATOR);
     spawnPlayer(world);
 
@@ -182,24 +208,20 @@ public class PlayerBackflipTracker implements Runnable, Listener {
     setSkin(player.getName(), gameProfile);
     serverPlayer = new ServerPlayer(minecraftServer, serverLevel, gameProfile, ClientInformation.createDefault());
     setValueUsingReflection(serverPlayer, "c", ((CraftPlayer) player).getHandle().connection);
-    Player fakePlayer = (Player) serverPlayer.getBukkitEntity();
-    fakePlayer.setGliding(true);
 
     EntityEquipment equipment = player.getEquipment();
     serverPlayer.moveTo(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-    List<SynchedEntityData.DataValue<?>> data = serverPlayer.getEntityData().packDirty();
     for (Player p : world.getPlayers()) {
-      ServerGamePacketListenerImpl connection = ((CraftPlayer) p).getHandle().connection;
-      connection.send(
-          new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, serverPlayer));
-      connection.send(serverPlayer.getAddEntityPacket());
-      if (data == null) {
-        continue;
-      }
-      connection.send(new ClientboundSetEntityDataPacket(serverPlayer.getId(), data));
-      connection.send(new ClientboundMoveEntityPacket.PosRot(
-          serverPlayer.getId(), (short) 0, (short) 0, (short) 0, (byte) ((location.getYaw()) * 255F / 360F), (byte) 127,
-          false));
+      ServerPlayer receivingPlayer = ((CraftPlayer) p).getHandle();
+      ServerGamePacketListenerImpl connection = receivingPlayer.connection;
+      connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, serverPlayer));
+      connection.send(new ClientboundAddEntityPacket(
+        serverPlayer,
+        0,
+        new BlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ())
+      ));
+      connection.send(new ClientboundTeleportEntityPacket(serverPlayer));
+      connection.send(new ClientboundAnimatePacket(serverPlayer, 0)); // swing main arm to force body rotation
       
       List<Pair<EquipmentSlot, ItemStack>> newEquipment = List.of(
         new Pair<EquipmentSlot, ItemStack>(EquipmentSlot.HEAD, CraftItemStack.asNMSCopy(equipment.getHelmet())),
