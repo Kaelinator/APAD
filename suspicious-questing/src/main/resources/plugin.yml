@@ -1,0 +1,16 @@
+name: SussyQuests
+version: 1.0
+description: The most suspicious quests!
+author: Kaelinator
+website: twitch.tv/kaelinator17
+api-version: 1.21
+
+main: com.kaelkirk.SpigotPlugin
+
+# commands:
+#     example:
+#         description: An example command
+#         permission: spigotplugin.example
+#         usage: /<command>
+
+permissions: {}
